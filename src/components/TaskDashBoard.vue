@@ -200,7 +200,7 @@ textarea {
 .column {
     padding: 12px;
     border-radius: 8px;
-    min-height: 300px;
+    min-height: 200px;
 
 }
 
