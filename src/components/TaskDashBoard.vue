@@ -191,17 +191,19 @@ textarea {
 
 
 .board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+
+    display: flex;
     gap: 16px;
     margin-top: 30px;
+    align-items: flex-start;
 }
 
 .column {
+
+    flex: 1;
     padding: 12px;
     border-radius: 8px;
     min-height: 200px;
-
 }
 
 .column h3 {
@@ -224,7 +226,7 @@ textarea {
 
 .card {
     background: rgb(27, 26, 26);
-    color:white;
+    color: white;
     border-radius: 6px;
     padding: 10px;
     margin-bottom: 10px;
