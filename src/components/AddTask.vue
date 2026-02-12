@@ -1,8 +1,8 @@
 <template>
-    <div class="modal" @click.stop>
+    <div v-if="showFormModal" class="modal" @click.stop>
         <div class="modal-header">
             <h2 class="modal-header_title">Add New Task</h2>
-            <button class="modal-header_close">✕
+            <button class="modal-header_close" @click="close">✕
                 <!-- <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="cancel-button" type="button">Cancel</button>
+                <button class="cancel-button" type="button" @click="close">Cancel</button>
                 <button class="add-button" type="submit">Add</button>
             </div>
         </form>
@@ -44,7 +44,13 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 
+const showFormModal = ref(true);
+
+function close() {
+    showFormModal.value = false;
+}
 </script>
 <style>
 .modal {
