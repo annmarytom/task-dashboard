@@ -1,0 +1,153 @@
+<template>
+    <div class="modal" @click.stop>
+        <div class="modal-header">
+            <h2 class="modal-header_title">Add New Task</h2>
+            <button class="modal-header_close">✕
+                <!-- <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg> -->
+            </button>
+        </div>
+
+        <form class="form">
+            <div class="input-fields">
+                <label class="label">Task Name * </label>
+                <input type="text" class="input" placeholder="Ex:Build Logic">
+            </div>
+            <div class="input-fields">
+                <label class="label">Description</label>
+                <textarea type="text" class="input" placeholder="Details"></textarea>
+            </div>
+            <div class="input-fields-meta">
+                <div class="input-fields">
+                    <label class="label">Status</label>
+                    <select class="input" :style="{ width: '200px' }">
+                        <option value="Todo">Todo</option>
+                        <option>In progress</option>
+                        <option>Completed</option>
+                        <option>Blocked</option>
+                    </select>
+                </div>
+                <div class="input-fields">
+                    <label class="label">Due Date</label>
+                    <input type="date" class="input" :style="{ width: '200px' }">
+                </div>
+            </div>
+            <div class="actions">
+                <button class="cancel-button" type="button">Cancel</button>
+                <button class="add-button" type="submit">Add</button>
+            </div>
+        </form>
+    </div>
+
+</template>
+
+<script setup>
+
+</script>
+<style>
+.modal {
+
+    width: min(500px, 100%);
+    background-color: rgb(19, 24, 54);
+    border: 1px solid rgb(67, 65, 65);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.modal-header {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header_title {
+
+    font-size: large;
+    color: white;
+}
+
+.modal-header_close {
+
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.form {
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.input-fields {
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.label {
+
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: small;
+}
+
+.input {
+
+    width: auto;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    background-color: transparent;
+    padding: 12px;
+    color: gray;
+}
+
+.input-fields-meta {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.actions {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 40px;
+    justify-content: end;
+    margin-top: 20px;
+}
+
+.cancel-button {
+
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #444;
+    background: transparent;
+    color: white;
+}
+
+.add-button {
+
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #444;
+    background: transparent;
+    color: white;
+}
+</style>
