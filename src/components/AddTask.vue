@@ -55,8 +55,8 @@ function close() {
 <style>
 .modal {
 
-    width: min(500px, 100%);
-    background-color: rgb(19, 24, 54);
+    width: 600px;
+    background-color: #263d70;
     border: 1px solid rgb(67, 65, 65);
     border-radius: 15px;
     padding: 20px;
@@ -68,6 +68,7 @@ function close() {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    background-color:  #263d70;
 }
 
 .modal-header_title {
