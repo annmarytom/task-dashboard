@@ -13,13 +13,16 @@
                         <button class="iconBtn" aria-label="Menu">⋯</button>
                     </div>
 
-                    <button class="btn btn--add" @click="showAddTaskModal">+ Add Task</button>
-
+                    <button class="btn btn--add" @click="showAddTaskModal">
+                        + Add Task
+                    </button>
                 </article>
 
                 <!-- Add Section button -->
                 <div class="addSection">
-                    <button class="btn btn--primary" @click="openAddSectionModal">Add Section</button>
+                    <button class="btn btn--primary" @click="openAddSectionModal">
+                        Add Section
+                    </button>
                 </div>
 
                 <!-- Modal -->
@@ -27,18 +30,21 @@
                     <div class="modal" @click.stop>
                         <div class="modal-header">
                             <h3 class="modal-title">Add Section</h3>
-                            <button class="iconBtn" aria-label="Close">✕</button>
+                            <button class="iconBtn" @click="closeModal">✕</button>
                         </div>
 
                         <div class="form">
                             <label class="field">
                                 <span class="field-label">Section Name</span>
-                                <input class="input" type="text" placeholder="Eg: In Progress" />
+                                <input class="input" type="text" placeholder="Eg: In Progress"
+                                    v-model.trim="newSectionTitle" />
                             </label>
 
                             <div class="actions">
-                                <button class="btn" @click="closeModal" type="button">Cancel</button>
-                                <button class="btn btn--primary" type="button">
+                                <button class="btn" @click="closeModal" type="button">
+                                    Cancel
+                                </button>
+                                <button class="btn btn--primary" type="button" @click="saveSection">
                                     Save
                                 </button>
                             </div>
@@ -58,16 +64,27 @@ import { ref } from "vue";
 import AddTask from "./AddTask.vue";
 
 const sections = ref([{ id: 1, title: "Todo" }]);
-
+const newSectionTitle = ref("");
 const modalOpen = ref(false);
 const AddTaskModalOpen = ref(false);
-
+let nextSectionId = 2;
 function openAddSectionModal() {
     modalOpen.value = true;
+    newSectionTitle.value = "";
+}
+function closeModal() {
+    modalOpen.value = false;
 }
 
+function saveSection() {
+    const title = newSectionTitle.value.trim();
+    if (!title) return;
+
+    sections.value.push({ id: nextSectionId++, title });
+    closeModal();
+}
 function showAddTaskModal() {
-    AddTaskModalOpen.value = true
+    AddTaskModalOpen.value = true;
 }
 </script>
 
@@ -180,11 +197,10 @@ function showAddTaskModal() {
 }
 
 .modal {
-    width:600px;
+    width: 600px;
     max-width: 100%;
     background: #263d70;
     border: 2px solid rgba(204, 206, 206, 0.55);
-    ;
     border-radius: 16px;
     padding: 16px;
 }
@@ -227,15 +243,14 @@ function showAddTaskModal() {
     outline: none;
 }
 
-
 .actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
 }
-.add-task-modal{
+.add-task-modal {
     position: absolute;
-    top:200px;
-    left:500px;
+    top: 200px;
+    left: 500px;
 }
 </style>
