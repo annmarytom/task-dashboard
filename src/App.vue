@@ -1,6 +1,5 @@
 <script setup>
 import DashBoard from './components/DashBoard.vue';
-import TaskDashBoard from './components/TaskDashBoard.vue';
 </script>
 
 <template>

@@ -10,19 +10,19 @@
             </button>
         </div>
 
-        <form class="form">
+        <form class="form"  @submit.prevent="submit">
             <div class="input-fields">
                 <label class="label">Task Name * </label>
-                <input type="text" class="input" placeholder="Ex:Build Logic">
+                <input v-model.trim="name" type="text" class="input" placeholder="Ex:Build Logic">
             </div>
             <div class="input-fields">
                 <label class="label">Description</label>
-                <textarea type="text" class="input" placeholder="Details"></textarea>
+                <textarea v-model.trim="description" type="text" class="input" placeholder="Details"></textarea>
             </div>
             <div class="input-fields-meta">
                 <div class="input-fields">
                     <label class="label">Status</label>
-                    <select class="input" :style="{ width: '200px' }">
+                    <select  v-model="status" class="input" :style="{ width: '200px' }">
                         <option value="Todo">Todo</option>
                         <option>In progress</option>
                         <option>Completed</option>
@@ -31,7 +31,7 @@
                 </div>
                 <div class="input-fields">
                     <label class="label">Due Date</label>
-                    <input type="date" class="input" :style="{ width: '200px' }">
+                    <input  v-model="dueDate" type="date" class="input" :style="{ width: '200px' }">
                 </div>
             </div>
             <div class="actions">
@@ -47,9 +47,29 @@
 import { ref } from 'vue';
 
 const showFormModal = ref(true);
+const emit = defineEmits(["close","save"]);
+const name = ref("");
+const description = ref("");
+const status = ref("Todo");
+const dueDate = ref("");
 
 function close() {
     showFormModal.value = false;
+    emit("close");
+}
+
+function submit() {
+  if (!name.value.trim()) return;
+
+  const task = {
+    id: Date.now(), 
+    name: name.value.trim(),
+    description: description.value.trim(),
+    status: status.value,
+    dueDate: dueDate.value || null,
+  };
+
+  emit("save", task); 
 }
 </script>
 <style>
