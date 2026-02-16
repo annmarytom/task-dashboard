@@ -22,12 +22,11 @@
             <div class="input-fields-meta">
                 <div class="input-fields">
                     <label class="label">Status</label>
-                    <select  v-model="status" class="input" :style="{ width: '200px' }">
-                        <option value="Todo">Todo</option>
-                        <option>In progress</option>
-                        <option>Completed</option>
-                        <option>Blocked</option>
-                    </select>
+                    <select v-model="status" class="input" :style="{ width: '200px' }">
+  <option v-for="opt in statusOptions" :key="opt" :value="opt">
+    {{ opt }}
+  </option>
+</select>
                 </div>
                 <div class="input-fields">
                     <label class="label">Due Date</label>
@@ -44,32 +43,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from "vue";
+
+const props = defineProps({
+  statusOptions: { type: Array, default: () => [] },
+  defaultStatus: { type: String, default: "" },
+});
 
 const showFormModal = ref(true);
-const emit = defineEmits(["close","save"]);
+const emit = defineEmits(["close", "save"]);
+
 const name = ref("");
 const description = ref("");
-const status = ref("Todo");
+const status = ref(props.defaultStatus || props.statusOptions[0] || "Todo");
 const dueDate = ref("");
 
+// if dashboard changes the default (like you clicked add task in another section)
+watch(
+  () => props.defaultStatus,
+  (v) => {
+    status.value = v || props.statusOptions[0] || "Todo";
+  }
+);
+
 function close() {
-    showFormModal.value = false;
-    emit("close");
+  showFormModal.value = false;
+  emit("close");
 }
 
 function submit() {
   if (!name.value.trim()) return;
 
   const task = {
-    id: Date.now(), 
+    id: Date.now(),
     name: name.value.trim(),
     description: description.value.trim(),
     status: status.value,
     dueDate: dueDate.value || null,
   };
 
-  emit("save", task); 
+  emit("save", task);
 }
 </script>
 <style>

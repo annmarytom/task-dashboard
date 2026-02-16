@@ -1,203 +1,229 @@
 <template>
     <section class="dashboard" @click="closeAllMenus">
-      <header class="dashboard-header">
-        <h1 class="dashboard-title">Task Dashboard</h1>
-      </header>
-  
-      <div class="board">
-        <div class="board-row">
-          <!-- Sections -->
-          <article v-for="sec in sections" :key="sec.id" class="section">
-            <div class="section-top">
-              <h2 class="section-title">{{ sec.title }}</h2>
-  
-              <!-- Menu Wrap -->
-              <div class="menuWrap" @click.stop>
-                <button class="iconBtn" aria-label="Menu" @click="toggleMenu(sec.id)">⋯</button>
-  
-                <!-- Popup -->
-                <div v-if="menuOpenFor === sec.id" class="menuPopup">
-                  <button class="menuItem" @click="editSection(sec.id)">Edit</button>
-                  <button class="menuItem danger" @click="deleteSection(sec.id)">Delete</button>
+        <header class="dashboard-header">
+            <h1 class="dashboard-title">Task Dashboard</h1>
+        </header>
+
+        <div class="board">
+            <div class="board-row">
+                <!-- Sections -->
+                <article v-for="sec in sections" :key="sec.id" class="section">
+                    <div class="section-top">
+                        <h2 class="section-title">{{ sec.title }}</h2>
+
+                        <!-- Menu Wrap -->
+                        <div class="menuWrap" @click.stop>
+                            <button class="iconBtn" aria-label="Menu" @click="toggleMenu(sec.id)">⋯</button>
+
+                            <!-- Popup -->
+                            <div v-if="menuOpenFor === sec.id" class="menuPopup">
+                                <button class="menuItem" @click="editSection(sec.id)">Edit</button>
+                                <button class="menuItem danger" @click="deleteSection(sec.id)">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn--add" @click="showAddTaskModal(sec.id)">
+                        + Add Task
+                    </button>
+
+                    <div class="task-list">
+                        <div v-for="t in sec.tasks" :key="t.id" class="task-card">
+                            <div class="task-title">{{ t.name }}</div>
+                            <div class="task-desc" v-if="t.description">{{ t.description }}</div>
+
+                            <div class="task-meta">
+                                <span>{{ t.status }}</span>
+                                <span v-if="t.dueDate">{{ t.dueDate }}</span>
+                            </div>
+
+                            <div class="task-actions">
+                                <button class="action-btn" @click="deleteTask(sec.id, t.id)">
+                                    <!-- Trash icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                </button>
+
+                                <button class="action-btn">
+                                    <!-- edit icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Add Section button -->
+                <div class="addSection">
+                    <button class="btn btn--primary" @click="openAddSectionModal">
+                        Add Section
+                    </button>
                 </div>
-              </div>
+
+                <!-- Add/Edit Section Modal -->
+                <div v-if="modalOpen" class="backdrop" @click="closeModal">
+                    <div class="modal" @click.stop>
+                        <div class="modal-header">
+                            <h3 class="modal-title">{{ editingSectionId ? "Edit Section" : "Add Section" }}</h3>
+                            <button class="iconBtn" @click="closeModal">✕</button>
+                        </div>
+
+                        <div class="form">
+                            <label class="field">
+                                <span class="field-label">Section Name</span>
+                                <input class="input" type="text" placeholder="Eg: In Progress"
+                                    v-model.trim="newSectionTitle" />
+                            </label>
+
+                            <div class="actions">
+                                <button class="btn" @click="closeModal" type="button">Cancel</button>
+                                <button class="btn btn--primary" type="button" @click="saveSection">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Task Modal -->
+                <AddTask v-if="AddTaskModalOpen" :status-options="statusOptions"
+                    :default-status="defaultStatusForActiveSection" @close="AddTaskModalOpen = false"
+                    @save="addTaskToSection" />
             </div>
-  
-            <button class="btn btn--add" @click="showAddTaskModal(sec.id)">
-              + Add Task
-            </button>
-  
-            <div class="task-list">
-              <div v-for="t in sec.tasks" :key="t.id" class="task-card">
-                <div class="task-title">{{ t.name }}</div>
-                <div class="task-desc" v-if="t.description">{{ t.description }}</div>
-  
-                <div class="task-meta">
-                  <span>{{ t.status }}</span>
-                  <span v-if="t.dueDate">{{ t.dueDate }}</span>
-                </div>
-  
-                <div class="task-actions">
-                  <button class="action-btn" @click="deleteTask(sec.id, t.id)">
-                    <!-- Trash icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                      stroke-width="1.5" stroke="currentColor" class="size-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                  </button>
-  
-                  <button class="action-btn">
-                    <!-- edit icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                      stroke-width="1.5" stroke="currentColor" class="size-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </article>
-  
-          <!-- Add Section button -->
-          <div class="addSection">
-            <button class="btn btn--primary" @click="openAddSectionModal">
-              Add Section
-            </button>
-          </div>
-  
-          <!-- Add/Edit Section Modal -->
-          <div v-if="modalOpen" class="backdrop" @click="closeModal">
-            <div class="modal" @click.stop>
-              <div class="modal-header">
-                <h3 class="modal-title">{{ editingSectionId ? "Edit Section" : "Add Section" }}</h3>
-                <button class="iconBtn" @click="closeModal">✕</button>
-              </div>
-  
-              <div class="form">
-                <label class="field">
-                  <span class="field-label">Section Name</span>
-                  <input class="input" type="text" placeholder="Eg: In Progress" v-model.trim="newSectionTitle" />
-                </label>
-  
-                <div class="actions">
-                  <button class="btn" @click="closeModal" type="button">Cancel</button>
-                  <button class="btn btn--primary" type="button" @click="saveSection">Save</button>
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <!-- Add Task Modal -->
-          <AddTask
-            v-if="AddTaskModalOpen"
-            @close="AddTaskModalOpen = false"
-            @save="addTaskToSection"
-          />
         </div>
-      </div>
     </section>
-  </template>
-  
-  <script setup>
-  import { ref } from "vue";
-  import AddTask from "./AddTask.vue";
-  
-  const sections = ref([{ id: 1, title: "Todo", tasks: [] }]); 
-  const newSectionTitle = ref("");
-  const modalOpen = ref(false); 
-  const AddTaskModalOpen = ref(false);
-  const activeSectionId = ref(null);
-  
-  let nextSectionId = 2;
-  
-  /** SECTION MENU */
-  const menuOpenFor = ref(null);        
-  const editingSectionId = ref(null);  
-  function toggleMenu(sectionId) {
+</template>
+
+<script setup>
+import { computed, ref } from "vue";
+import AddTask from "./AddTask.vue";
+
+const sections = ref([{ id: 1, title: "Todo", tasks: [] }]);
+const statusOptions = computed(() => sections.value.map(s => s.title));
+const defaultStatusForActiveSection = computed(() => {
+    const sec = sections.value.find(s => s.id === activeSectionId.value);
+    return sec?.title || statusOptions.value[0] || "Todo";
+});
+const newSectionTitle = ref("");
+const modalOpen = ref(false);
+const AddTaskModalOpen = ref(false);
+const activeSectionId = ref(null);
+
+let nextSectionId = 2;
+
+/** SECTION MENU */
+const menuOpenFor = ref(null);
+const editingSectionId = ref(null);
+function toggleMenu(sectionId) {
     menuOpenFor.value = menuOpenFor.value === sectionId ? null : sectionId;
-  }
-  function closeAllMenus() {
+}
+function closeAllMenus() {
     menuOpenFor.value = null;
-  }
-  
-  /** TASKS */
-  function showAddTaskModal(sectionId) {
+}
+
+/** TASKS */
+function showAddTaskModal(sectionId) {
     activeSectionId.value = sectionId;
     AddTaskModalOpen.value = true;
-  }
-  function addTaskToSection(task) {
+}
+function addTaskToSection(task) {
     const sec = sections.value.find(s => s.id === activeSectionId.value);
     if (!sec) return;
-  
+
     sec.tasks.push(task);
     AddTaskModalOpen.value = false;
     activeSectionId.value = null;
-  }
-  function deleteTask(sectionId, taskId) {
+}
+function deleteTask(sectionId, taskId) {
     const sec = sections.value.find(s => s.id === sectionId);
     if (!sec) return;
     sec.tasks = sec.tasks.filter(t => t.id !== taskId);
-  }
-  
-  /** ADD/EDIT SECTION MODAL */
-  function openAddSectionModal() {
+}
+
+/** ADD/EDIT SECTION MODAL */
+function openAddSectionModal() {
     editingSectionId.value = null;
     modalOpen.value = true;
     newSectionTitle.value = "";
     closeAllMenus();
-  }
-  
-  function editSection(sectionId) {
+}
+
+function editSection(sectionId) {
     const sec = sections.value.find(s => s.id === sectionId);
     if (!sec) return;
-  
+
     editingSectionId.value = sectionId;
     newSectionTitle.value = sec.title;
     modalOpen.value = true;
     closeAllMenus();
-  }
-  
-  function deleteSection(sectionId) {
+}
+
+function deleteSection(sectionId) {
+    const secToDelete = sections.value.find(s => s.id === sectionId);
+    const deletedTitle = secToDelete?.title;
+
     sections.value = sections.value.filter(s => s.id !== sectionId);
-  
+
     // if currently editing that section, reset
     if (editingSectionId.value === sectionId) {
-      editingSectionId.value = null;
-      newSectionTitle.value = "";
-      modalOpen.value = false;
+        editingSectionId.value = null;
+        newSectionTitle.value = "";
+        modalOpen.value = false;
     }
+
+    // If any existing task had status = deleted section title, move it to fallback
+    if (deletedTitle) {
+        const fallback = sections.value[0]?.title || "Todo";
+        sections.value.forEach(s => {
+            s.tasks.forEach(t => {
+                if (t.status === deletedTitle) t.status = fallback;
+            });
+        });
+    }
+
     closeAllMenus();
-  }
-  
-  function closeModal() {
+}
+
+function closeModal() {
     modalOpen.value = false;
     editingSectionId.value = null;
     newSectionTitle.value = "";
-  }
-  
-  function saveSection() {
+}
+
+function saveSection() {
     const title = newSectionTitle.value.trim();
     if (!title) return;
-  
+
     // edit mode
     if (editingSectionId.value) {
-      const sec = sections.value.find(s => s.id === editingSectionId.value);
-      if (!sec) return;
-      sec.title = title;
-      closeModal();
-      return;
+        const sec = sections.value.find(s => s.id === editingSectionId.value);
+        if (!sec) return;
+
+        const oldTitle = sec.title;
+        sec.title = title;
+
+        // update tasks in that section that were using the old status
+        sec.tasks.forEach(t => {
+            if (t.status === oldTitle) t.status = title;
+        });
+
+        closeModal();
+        return;
     }
-  
+
     // add mode
     sections.value.push({ id: nextSectionId++, title, tasks: [] });
     closeModal();
-  }
-  </script>
-  
-  <style scoped>
-  .dashboard {
+}
+</script>
+
+<style scoped>
+.dashboard {
     position: relative;
     min-height: 100vh;
     background: #f4f5f7;
@@ -208,67 +234,67 @@
     margin: 20px;
     display: flex;
     flex-direction: column;
-  }
-  
-  .dashboard-header {
+}
+
+.dashboard-header {
     margin-bottom: 18px;
     background-color: #263d70;
     height: 70px;
     padding: 20px;
-  }
-  
-  .dashboard-title {
+}
+
+.dashboard-title {
     font-size: 26px;
     font-weight: 700;
     letter-spacing: 0.2px;
-  }
-  
-  .board-row {
+}
+
+.board-row {
     display: flex;
     gap: 18px;
     align-items: flex-start;
     overflow-x: auto;
     padding: 10px;
-  }
-  
-  .section {
+}
+
+.section {
     width: 300px;
     flex: 0 0 auto;
     background: #263d70;
     border: 2px solid rgba(45, 212, 191, 0.55);
     border-radius: 18px;
     padding: 14px;
-  }
-  
-  .section-top {
+}
+
+.section-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
-  }
-  
-  .btn {
+}
+
+.btn {
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.06);
     color: #e5e7eb;
     padding: 10px 14px;
     border-radius: 12px;
     cursor: pointer;
-  }
-  
-  .btn--add {
+}
+
+.btn--add {
     width: fit-content;
     border: 2px solid rgba(204, 206, 206, 0.55);
     background: transparent;
-  }
-  
-  .btn--primary {
+}
+
+.btn--primary {
     border: 2px solid rgba(204, 206, 206, 0.55);
     background: #263d70;
     font-weight: 700;
-  }
-  
-  .iconBtn {
+}
+
+.iconBtn {
     border: none;
     background: transparent;
     color: #e5e7eb;
@@ -276,17 +302,17 @@
     cursor: pointer;
     padding: 6px 10px;
     border-radius: 10px;
-  }
-  .iconBtn:hover {
+}
+.iconBtn:hover {
     background: rgba(255, 255, 255, 0.08);
-  }
-  
-  .addSection {
+}
+
+.addSection {
     flex: 0 0 auto;
     padding-top: 6px;
-  }
-  
-  .backdrop {
+}
+
+.backdrop {
     position: fixed;
     inset: 0;
     display: flex;
@@ -295,99 +321,99 @@
     padding: 18px;
     background: rgba(0, 0, 0, 0.35);
     z-index: 50;
-  }
-  
-  .modal {
+}
+
+.modal {
     width: 600px;
     max-width: 100%;
     background: #263d70;
     border: 2px solid rgba(204, 206, 206, 0.55);
     border-radius: 16px;
     padding: 16px;
-  }
-  
-  .modal-header {
+}
+
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 14px;
-  }
-  
-  .modal-title {
+}
+
+.modal-title {
     font-size: 18px;
     font-weight: 800;
-  }
-  
-  .form {
+}
+
+.form {
     display: flex;
     flex-direction: column;
     gap: 14px;
-  }
-  
-  .field {
+}
+
+.field {
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-  
-  .field-label {
+}
+
+.field-label {
     font-size: 13px;
     color: rgba(229, 231, 235, 0.8);
-  }
-  
-  .input {
+}
+
+.input {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.14);
     color: #e5e7eb;
     padding: 10px 12px;
     border-radius: 12px;
     outline: none;
-  }
-  
-  .actions {
+}
+
+.actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-  }
-  
-  /* tasks */
-  .task-card {
+}
+
+/* tasks */
+.task-card {
     border: 1px solid white;
     border-radius: 10px;
     padding: 8px;
     margin-top: 10px;
-  }
-  .task-title {
+}
+.task-title {
     font-size: 16px;
     font-weight: 700;
-  }
-  .task-meta {
+}
+.task-meta {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-  }
-  .task-actions {
+}
+.task-actions {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-  }
-  .action-btn {
+}
+.action-btn {
     width: 30px;
     height: 30px;
     padding: 5px;
     border: none;
     background-color: #263d70;
     color: white;
-  }
-  .action-btn:hover {
+}
+.action-btn:hover {
     cursor: pointer;
-  }
-  
-  .menuWrap {
+}
+
+.menuWrap {
     position: relative;
-  }
-  
-  .menuPopup {
+}
+
+.menuPopup {
     position: absolute;
     top: 34px;
     right: 0;
@@ -398,9 +424,9 @@
     padding: 6px;
     z-index: 80;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  }
-  
-  .menuItem {
+}
+
+.menuItem {
     width: 100%;
     text-align: left;
     padding: 10px 10px;
@@ -410,17 +436,16 @@
     color: #e5e7eb;
     cursor: pointer;
     font-size: 14px;
-  }
-  
-  .menuItem:hover {
+}
+
+.menuItem:hover {
     background: rgba(255, 255, 255, 0.08);
-  }
-  
-  .menuItem.danger {
+}
+
+.menuItem.danger {
     color: #fca5a5;
-  }
-  .menuItem.danger:hover {
+}
+.menuItem.danger:hover {
     background: rgba(248, 113, 113, 0.15);
-  }
-  </style>
-  
+}
+</style>
