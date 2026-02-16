@@ -38,8 +38,8 @@
                             </div>
 
                             <div class="task-actions">
-                                <button class="action-btn" @click="deleteTask(sec.id, t.id)">
-                                    <!-- Trash icon -->
+                                <button class="action-btn">
+                                    <!-- delete icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -47,7 +47,7 @@
                                     </svg>
                                 </button>
 
-                                <button class="action-btn">
+                                <button class="action-btn" @click="openEditTaskModal(sec.id, t.id)">
                                     <!-- edit icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -58,6 +58,15 @@
                             </div>
                         </div>
                     </div>
+                      <!-- Add Task Modal -->
+                    <AddTask 
+                        v-if="AddTaskModalOpen && activeSectionId==sec.id"
+                        :status-options="statusOptions"
+                        :default-status="defaultStatusForActiveSection"
+                        :initial-task="editingTask" 
+                        @close="closeTaskModal"
+                        @save="upsertTask" 
+                    />
                 </article>
 
                 <!-- Add Section button -->
@@ -89,11 +98,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Add Task Modal -->
-                <AddTask v-if="AddTaskModalOpen" :status-options="statusOptions"
-                    :default-status="defaultStatusForActiveSection" @close="AddTaskModalOpen = false"
-                    @save="addTaskToSection" />
             </div>
         </div>
     </section>
@@ -104,15 +108,33 @@ import { computed, ref } from "vue";
 import AddTask from "./AddTask.vue";
 
 const sections = ref([{ id: 1, title: "Todo", tasks: [] }]);
+
 const statusOptions = computed(() => sections.value.map(s => s.title));
+
+const activeSectionId = ref(null);
+const AddTaskModalOpen = ref(false);
+
+//  edit context
+const editingTaskSectionId = ref(null);
+const editingTaskId = ref(null);
+
+const editingTask = computed(() => {
+    if (!editingTaskSectionId.value || !editingTaskId.value) return null;
+
+    const sec = sections.value.find(s => s.id === editingTaskSectionId.value);
+    if (!sec) return null;
+
+    const t = sec.tasks.find(x => x.id === editingTaskId.value);
+    return t ? { ...t } : null;
+});
+
 const defaultStatusForActiveSection = computed(() => {
     const sec = sections.value.find(s => s.id === activeSectionId.value);
     return sec?.title || statusOptions.value[0] || "Todo";
 });
+
 const newSectionTitle = ref("");
 const modalOpen = ref(false);
-const AddTaskModalOpen = ref(false);
-const activeSectionId = ref(null);
 
 let nextSectionId = 2;
 
@@ -126,24 +148,79 @@ function closeAllMenus() {
     menuOpenFor.value = null;
 }
 
-/** TASKS */
+/**  TASKS */
 function showAddTaskModal(sectionId) {
+    // add mode
     activeSectionId.value = sectionId;
+    editingTaskSectionId.value = null;
+    editingTaskId.value = null;
+
     AddTaskModalOpen.value = true;
 }
-function addTaskToSection(task) {
-    const sec = sections.value.find(s => s.id === activeSectionId.value);
+
+function openEditTaskModal(sectionId, taskId) {
+    // edit mode
+    activeSectionId.value = sectionId; // useful fallback
+    editingTaskSectionId.value = sectionId;
+    editingTaskId.value = taskId;
+
+    AddTaskModalOpen.value = true;
+}
+
+function closeTaskModal() {
+    AddTaskModalOpen.value = false;
+    activeSectionId.value = null;
+    editingTaskSectionId.value = null;
+    editingTaskId.value = null;
+}
+
+function upsertTask(task) {
+    console.log("Task details",task)
+    // if we are editing an existing task
+    if (editingTaskSectionId.value && editingTaskId.value) {
+        const fromSec = sections.value.find(s => s.id === editingTaskSectionId.value);
+        if (!fromSec) return;
+
+        const idx = fromSec.tasks.findIndex(t => t.id === editingTaskId.value);
+        if (idx === -1) return;
+
+        // If status changed, move task to the section matching that status
+        const toSec = sections.value.find(s => s.title === task.status);
+        console.log(toSec);
+
+        // Update the task in-place (keep same id)
+        const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId.value };
+
+        console.log(updated);
+
+        if (toSec && toSec.id !== fromSec.id) {
+            // remove from old section
+            fromSec.tasks.splice(idx, 1);
+            // add to new section
+            toSec.tasks.push(updated);
+        } else {
+            // same section (or unknown status), just replace
+            fromSec.tasks[idx] = updated;
+        }
+
+        closeTaskModal();
+        return;
+    }
+
+    // otherwise, add new
+    const sec = sections.value.find(s => s.title === task.status);
     if (!sec) return;
 
     sec.tasks.push(task);
-    AddTaskModalOpen.value = false;
-    activeSectionId.value = null;
+    closeTaskModal();
 }
-function deleteTask(sectionId, taskId) {
-    const sec = sections.value.find(s => s.id === sectionId);
-    if (!sec) return;
-    sec.tasks = sec.tasks.filter(t => t.id !== taskId);
-}
+
+// function deleteTask(sectionId, taskId) {
+//     const sec = sections.value.find(s => s.id === sectionId);
+//     if (!sec) return;
+//     sec.tasks = sec.tasks.filter(t => t.id !== taskId);
+// }
+
 
 /** ADD/EDIT SECTION MODAL */
 function openAddSectionModal() {
@@ -169,14 +246,12 @@ function deleteSection(sectionId) {
 
     sections.value = sections.value.filter(s => s.id !== sectionId);
 
-    // if currently editing that section, reset
     if (editingSectionId.value === sectionId) {
         editingSectionId.value = null;
         newSectionTitle.value = "";
         modalOpen.value = false;
     }
 
-    // If any existing task had status = deleted section title, move it to fallback
     if (deletedTitle) {
         const fallback = sections.value[0]?.title || "Todo";
         sections.value.forEach(s => {
@@ -199,7 +274,6 @@ function saveSection() {
     const title = newSectionTitle.value.trim();
     if (!title) return;
 
-    // edit mode
     if (editingSectionId.value) {
         const sec = sections.value.find(s => s.id === editingSectionId.value);
         if (!sec) return;
@@ -207,7 +281,6 @@ function saveSection() {
         const oldTitle = sec.title;
         sec.title = title;
 
-        // update tasks in that section that were using the old status
         sec.tasks.forEach(t => {
             if (t.status === oldTitle) t.status = title;
         });
@@ -216,11 +289,11 @@ function saveSection() {
         return;
     }
 
-    // add mode
     sections.value.push({ id: nextSectionId++, title, tasks: [] });
     closeModal();
 }
 </script>
+
 
 <style scoped>
 .dashboard {
@@ -258,7 +331,7 @@ function saveSection() {
 }
 
 .section {
-    width: 300px;
+    width: 335px;
     flex: 0 0 auto;
     background: #263d70;
     border: 2px solid rgba(45, 212, 191, 0.55);
@@ -303,6 +376,7 @@ function saveSection() {
     padding: 6px 10px;
     border-radius: 10px;
 }
+
 .iconBtn:hover {
     background: rgba(255, 255, 255, 0.08);
 }
@@ -383,20 +457,24 @@ function saveSection() {
     padding: 8px;
     margin-top: 10px;
 }
+
 .task-title {
     font-size: 16px;
     font-weight: 700;
 }
+
 .task-meta {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
+
 .task-actions {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
+
 .action-btn {
     width: 30px;
     height: 30px;
@@ -405,6 +483,7 @@ function saveSection() {
     background-color: #263d70;
     color: white;
 }
+
 .action-btn:hover {
     cursor: pointer;
 }
@@ -445,6 +524,7 @@ function saveSection() {
 .menuItem.danger {
     color: #fca5a5;
 }
+
 .menuItem.danger:hover {
     background: rgba(248, 113, 113, 0.15);
 }

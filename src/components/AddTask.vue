@@ -1,12 +1,9 @@
 <template>
+    <div class="modal-section">
     <div v-if="showFormModal" class="modal" @click.stop>
         <div class="modal-header">
-            <h2 class="modal-header_title">Add New Task</h2>
+            <h2 class="modal-header_title">{{ isEdit ? "Edit Task" : "Add New Task" }}</h2>
             <button class="modal-header_close" @click="close">✕
-                <!-- <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg> -->
             </button>
         </div>
 
@@ -22,47 +19,76 @@
             <div class="input-fields-meta">
                 <div class="input-fields">
                     <label class="label">Status</label>
-                    <select v-model="status" class="input" :style="{ width: '200px' }">
+                    <select v-model="status" class="input">
   <option v-for="opt in statusOptions" :key="opt" :value="opt">
     {{ opt }}
   </option>
 </select>
                 </div>
-                <div class="input-fields">
+                <div class="input-fields" >
                     <label class="label">Due Date</label>
-                    <input  v-model="dueDate" type="date" class="input" :style="{ width: '200px' }">
+                    <input  v-model="dueDate" type="date" class="input">
                 </div>
             </div>
             <div class="actions">
                 <button class="cancel-button" type="button" @click="close">Cancel</button>
-                <button class="add-button" type="submit">Add</button>
+                <button class="add-button" type="submit">{{ isEdit ? "Save" : "Add" }}</button>
             </div>
         </form>
     </div>
-
+</div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
   defaultStatus: { type: String, default: "" },
+
+  //  if provided => edit mode
+  initialTask: { type: Object, default: null },
 });
 
-const showFormModal = ref(true);
 const emit = defineEmits(["close", "save"]);
 
+const showFormModal = ref(true);
+
+const isEdit = computed(() => !!props.initialTask);
+
+// form fields
 const name = ref("");
 const description = ref("");
 const status = ref(props.defaultStatus || props.statusOptions[0] || "Todo");
 const dueDate = ref("");
 
-// if dashboard changes the default (like you clicked add task in another section)
+//  whenever we open modal for edit, fill values
+watch(
+  () => props.initialTask,
+  (t) => {
+    if (t) {
+      name.value = t.name ?? "";
+      description.value = t.description ?? "";
+      status.value = t.status ?? (props.defaultStatus || props.statusOptions[0] || "Todo");
+      dueDate.value = t.dueDate ?? "";
+    } else {
+      // add mode reset
+      name.value = "";
+      description.value = "";
+      status.value = props.defaultStatus || props.statusOptions[0] || "Todo";
+      dueDate.value = "";
+    }
+  },
+  { immediate: true }
+);
+
+// if dashboard changes default status while in add mode
 watch(
   () => props.defaultStatus,
   (v) => {
-    status.value = v || props.statusOptions[0] || "Todo";
+    if (!isEdit.value) {
+      status.value = v || props.statusOptions[0] || "Todo";
+    }
   }
 );
 
@@ -74,8 +100,9 @@ function close() {
 function submit() {
   if (!name.value.trim()) return;
 
+  //  if edit, keep same id
   const task = {
-    id: Date.now(),
+    id: props.initialTask?.id ?? Date.now(),
     name: name.value.trim(),
     description: description.value.trim(),
     status: status.value,
@@ -85,10 +112,12 @@ function submit() {
   emit("save", task);
 }
 </script>
-<style>
-.modal {
 
-    width: 600px;
+<style>
+
+.modal {
+    
+    width: 100%;
     background-color: #263d70;
     border: 1px solid rgb(67, 65, 65);
     border-radius: 15px;
@@ -159,6 +188,7 @@ function submit() {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    gap: 10px;
 }
 
 .actions {
