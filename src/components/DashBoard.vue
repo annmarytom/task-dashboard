@@ -11,16 +11,8 @@
                     <div class="section-top">
                         <h2 class="section-title">{{ sec.title }}</h2>
 
-                        <!-- Menu Wrap -->
-                        <div class="menuWrap" @click.stop>
-                            <button class="iconBtn" aria-label="Menu" @click="toggleMenu(sec.id)">⋯</button>
-
-                            <!-- Popup -->
-                            <div v-if="menuOpenFor === sec.id" class="menuPopup">
-                                <button class="menuItem" @click="editSection(sec.id)">Edit</button>
-                                <button class="menuItem danger" @click="deleteSection(sec.id)">Delete</button>
-                            </div>
-                        </div>
+                        <MenuPopUp :open="menuOpenFor === sec.id" @toggle="toggleMenu(sec.id)"
+                            @edit="editSection(sec.id)" @delete="deleteSection(sec.id)" />
                     </div>
 
                     <button class="btn btn--add" @click="showAddTaskModal(sec.id)">
@@ -102,6 +94,7 @@
 import { computed, ref } from "vue";
 import AddTask from "./AddTask.vue";
 import { uniqueId } from "lodash";
+import MenuPopUp from "./MenuPopUp.vue";
 
 const sections = ref([{ id: 1, title: "Todo", tasks: [] }]);
 
@@ -496,46 +489,5 @@ function saveSection() {
 
 .action-btn:hover {
     cursor: pointer;
-}
-
-.menuWrap {
-    position: relative;
-}
-
-.menuPopup {
-    position: absolute;
-    top: 34px;
-    right: 0;
-    width: 140px;
-    background: #1f2f58;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 12px;
-    padding: 6px;
-    z-index: 80;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-}
-
-.menuItem {
-    width: 100%;
-    text-align: left;
-    padding: 10px 10px;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: #e5e7eb;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.menuItem:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.menuItem.danger {
-    color: #fca5a5;
-}
-
-.menuItem.danger:hover {
-    background: rgba(248, 113, 113, 0.15);
 }
 </style>
