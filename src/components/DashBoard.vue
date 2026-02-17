@@ -38,7 +38,7 @@
                             </div>
 
                             <div class="task-actions">
-                                <button class="action-btn">
+                                <button class="action-btn" @click="deleteTask(sec.id, t.id)">
                                     <!-- delete icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -215,11 +215,22 @@ function upsertTask(task) {
     closeTaskModal();
 }
 
-// function deleteTask(sectionId, taskId) {
-//     const sec = sections.value.find(s => s.id === sectionId);
-//     if (!sec) return;
-//     sec.tasks = sec.tasks.filter(t => t.id !== taskId);
-// }
+function deleteTask(sectionId, taskId) {
+    const sec = sections.value.find(s => s.id === sectionId);
+    if (!sec) return;
+
+    const idx = sec.tasks.findIndex(t => t.id === taskId);
+    if (idx === -1) return;
+
+    sec.tasks.splice(idx, 1);
+
+    // if the task being deleted is currently open in edit modal, close it
+    if (editingTaskSectionId.value === sectionId && editingTaskId.value === taskId) {
+        closeTaskModal();
+    }
+
+    closeAllMenus();
+}
 
 
 /** ADD/EDIT SECTION MODAL */
@@ -328,6 +339,7 @@ function saveSection() {
     align-items: flex-start;
     overflow-x: auto;
     padding: 10px;
+    height: 540px;
 }
 
 .section {
@@ -452,7 +464,7 @@ function saveSection() {
 
 /* tasks */
 .task-card {
-    border: 1px solid white;
+    border: 3px solid white;
     border-radius: 10px;
     padding: 8px;
     margin-top: 10px;
