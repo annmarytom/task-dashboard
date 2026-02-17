@@ -58,15 +58,10 @@
                             </div>
                         </div>
                     </div>
-                      <!-- Add Task Modal -->
-                    <AddTask 
-                        v-if="AddTaskModalOpen && activeSectionId==sec.id"
-                        :status-options="statusOptions"
-                        :default-status="defaultStatusForActiveSection"
-                        :initial-task="editingTask" 
-                        @close="closeTaskModal"
-                        @save="upsertTask" 
-                    />
+                    <!-- Add Task Modal -->
+                    <AddTask v-if="AddTaskModalOpen && activeSectionId == sec.id" :status-options="statusOptions"
+                        :default-status="defaultStatusForActiveSection" :initial-task="editingTask"
+                        @close="closeTaskModal" @save="upsertTask" />
                 </article>
 
                 <!-- Add Section button -->
@@ -106,6 +101,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import AddTask from "./AddTask.vue";
+import { uniqueId } from "lodash";
 
 const sections = ref([{ id: 1, title: "Todo", tasks: [] }]);
 
@@ -136,7 +132,6 @@ const defaultStatusForActiveSection = computed(() => {
 const newSectionTitle = ref("");
 const modalOpen = ref(false);
 
-let nextSectionId = 2;
 
 /** SECTION MENU */
 const menuOpenFor = ref(null);
@@ -175,7 +170,6 @@ function closeTaskModal() {
 }
 
 function upsertTask(task) {
-    console.log("Task details",task)
     // if we are editing an existing task
     if (editingTaskSectionId.value && editingTaskId.value) {
         const fromSec = sections.value.find(s => s.id === editingTaskSectionId.value);
@@ -300,7 +294,11 @@ function saveSection() {
         return;
     }
 
-    sections.value.push({ id: nextSectionId++, title, tasks: [] });
+    sections.value.push({
+        id: uniqueId("section_"),
+        title,
+        tasks: []
+    });
     closeModal();
 }
 </script>
