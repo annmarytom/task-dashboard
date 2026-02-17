@@ -118,8 +118,9 @@ function submit() {
 .modal {
     
     width: 100%;
+    margin-top: 20px;
     background-color: #263d70;
-    border: 1px solid rgb(67, 65, 65);
+    border: 3px solid rgb(233 220 220);
     border-radius: 15px;
     padding: 20px;
 }
