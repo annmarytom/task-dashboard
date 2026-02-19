@@ -1,71 +1,73 @@
 <template>
-  <div class="modal-section">
-    <div v-if="showFormModal" class="modal" @click.stop>
-      <div class="modal-header">
-        <h2 class="modal-header_title">
-          {{ isEdit ? "Edit Task" : "Add New Task" }}
-        </h2>
-        <button class="modal-header_close" @click="close">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="size-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18 18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+  <div class="taskForm">
+    <div class="taskForm-header">
+      <h3 class="taskForm-title">
+        {{ isEdit ? "Edit Task" : "Add New Task" }}
+      </h3>
+
+      <button class="taskForm-close" type="button" @click="cancel">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18 18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <form class="form" @submit.prevent="submit">
+      <div class="input-fields">
+        <label class="label">Task Name * </label>
+        <input
+          v-model.trim="name"
+          type="text"
+          class="input"
+          placeholder="Ex:Build Logic"
+        />
       </div>
 
-      <form class="form" @submit.prevent="submit">
+      <div class="input-fields">
+        <label class="label">Description</label>
+        <textarea
+          v-model.trim="description"
+          class="input"
+          placeholder="Details"
+        ></textarea>
+      </div>
+
+      <div class="input-fields-meta">
         <div class="input-fields">
-          <label class="label">Task Name * </label>
-          <input
-            v-model.trim="name"
-            type="text"
-            class="input"
-            placeholder="Ex:Build Logic"
-          />
+          <label class="label">Status</label>
+          <select v-model="status" class="input">
+            <option v-for="opt in statusOptions" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+          </select>
         </div>
+
         <div class="input-fields">
-          <label class="label">Description</label>
-          <textarea
-            v-model.trim="description"
-            type="text"
-            class="input"
-            placeholder="Details"
-          ></textarea>
+          <label class="label">Due Date</label>
+          <input v-model="dueDate" type="date" class="input" />
         </div>
-        <div class="input-fields-meta">
-          <div class="input-fields">
-            <label class="label">Status</label>
-            <select v-model="status" class="input">
-              <option v-for="opt in statusOptions" :key="opt" :value="opt">
-                {{ opt }}
-              </option>
-            </select>
-          </div>
-          <div class="input-fields">
-            <label class="label">Due Date</label>
-            <input v-model="dueDate" type="date" class="input" />
-          </div>
-        </div>
-        <div class="actions">
-          <button class="cancel-button" type="button" @click="close">
-            Cancel
-          </button>
-          <button class="add-button" type="submit">
-            {{ isEdit ? "Save" : "Add" }}
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="actions">
+        <button class="cancel-button" type="button" @click="cancel">
+          Cancel
+        </button>
+        <button class="add-button" type="submit">
+          {{ isEdit ? "Save" : "Add" }}
+        </button>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -75,14 +77,11 @@ import { computed, ref, watch } from "vue";
 const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
   defaultStatus: { type: String, default: "" },
-
   //  if provided => edit mode
   initialTask: { type: Object, default: null },
 });
 
-const emit = defineEmits(["close", "save"]);
-
-const showFormModal = ref(true);
+const emit = defineEmits(["cancel", "save"]);
 
 const isEdit = computed(() => !!props.initialTask);
 
@@ -91,7 +90,6 @@ const name = ref("");
 const description = ref("");
 const status = ref(props.defaultStatus || props.statusOptions[0] || "Todo");
 const dueDate = ref("");
-
 //  whenever we open modal for edit, fill values
 watch(
   () => props.initialTask,
@@ -123,14 +121,12 @@ watch(
   }
 );
 
-function close() {
-  showFormModal.value = false;
-  emit("close");
+function cancel() {
+  emit("cancel");
 }
 
 function submit() {
   if (!name.value.trim()) return;
-
   //  if edit, keep same id
   const task = {
     id: props.initialTask?.id ?? Date.now(),
@@ -144,52 +140,47 @@ function submit() {
 }
 </script>
 
-<style>
-.modal {
+<style scoped>
+.taskForm {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
   background-color: #263d70;
   border: 3px solid rgb(233 220 220);
   border-radius: 15px;
-  padding: 20px;
+  padding: 14px;
 }
 
-.modal-header {
+.taskForm-header {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background-color: #263d70;
 }
 
-.modal-header_title {
-  font-size: large;
+.taskForm-title {
   color: white;
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.modal-header_close {
+.taskForm-close {
   background: transparent;
   border: none;
   color: white;
   cursor: pointer;
   font-size: 16px;
-  width: 20px;
-  height: 20px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   margin-top: 10px;
 }
 
 .input-fields {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 8px;
-  margin-top: 15px;
+  margin-top: 12px;
 }
 
 .label {
@@ -205,32 +196,24 @@ function submit() {
   border-radius: 10px;
   background-color: transparent;
   padding: 12px;
-  color: gray;
+  color: #e5e7eb;
+}
+
+textarea.input {
+  height: 80px;
+  resize: vertical;
 }
 
 .input-fields-meta {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
   gap: 10px;
 }
 
 .actions {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 40px;
   justify-content: end;
-  margin-top: 20px;
-}
-
-.cancel-button {
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 1px solid #444;
-  background: transparent;
-  color: white;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .add-button {
