@@ -224,4 +224,12 @@ textarea.input {
   background: transparent;
   color: white;
 }
+.cancel-button{
+  padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #444;
+    background: transparent;
+    color: white;
+}
 </style>
