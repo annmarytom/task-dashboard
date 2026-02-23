@@ -1,10 +1,34 @@
 <template>
   <section class="dashboard" @click="closeAllMenus">
     <header class="dashboard-header">
-      <h1 class="dashboard-title">Task Dashboard</h1>
+      <div class="headerRow">
+        <h1 class="dashboard-title">Task Dashboard</h1>
+
+        <!-- Toggle -->
+        <div class="viewToggle" @click.stop>
+          <button
+            class="toggleBtn"
+            :class="{ active: viewMode === 'board' }"
+            type="button"
+            @click="viewMode = 'board'"
+          >
+            Board
+          </button>
+
+          <button
+            class="toggleBtn"
+            :class="{ active: viewMode === 'table' }"
+            type="button"
+            @click="viewMode = 'table'"
+          >
+            Table
+          </button>
+        </div>
+      </div>
     </header>
 
-    <div class="board">
+    <!-- BOARD VIEW -->
+    <div v-if="viewMode === 'board'" class="board">
       <div class="board-row">
         <!-- Sections -->
         <article v-for="sec in sections" :key="sec.id" class="section">
@@ -12,11 +36,11 @@
             <!-- INLINE EDIT TITLE  -->
             <div class="sectionTitleWrap">
               <template v-if="editingSectionId === sec.id">
-                <SectionInlineEditor 
-                v-model="newSectionTitle" 
-                placeholder="Section name" 
-                @save="saveSectionEdit(sec.id)" 
-                @cancel="cancelSectionEdit"
+                <SectionInlineEditor
+                  v-model="newSectionTitle"
+                  placeholder="Section name"
+                  @save="saveSectionEdit(sec.id)"
+                  @cancel="cancelSectionEdit"
                 />
               </template>
 
@@ -26,38 +50,37 @@
             </div>
 
             <!-- Menu only when not editing -->
-            <MenuPopUp 
-            v-if="editingSectionId !== sec.id" 
-            :open="menuOpenFor === sec.id" 
-            @toggle="toggleMenu(sec.id)"
-            @edit="startEditSection(sec.id)" 
-            @delete="deleteSection(sec.id)" 
+            <MenuPopUp
+              v-if="editingSectionId !== sec.id"
+              :open="menuOpenFor === sec.id"
+              @toggle="toggleMenu(sec.id)"
+              @edit="startEditSection(sec.id)"
+              @delete="deleteSection(sec.id)"
             />
           </div>
 
           <!-- TaskList  -->
           <TaskList
-           :section-id="sec.id" 
-           :section-title="sec.title" 
-           :tasks="sec.tasks" 
-           :status-options="statusOptions"
-           :default-status="sec.title" 
-           @upsert="handleTaskUpsert" 
-           @delete="handleTaskDelete" 
-           @move="handleTaskMove" 
+            :section-id="sec.id"
+            :section-title="sec.title"
+            :tasks="sec.tasks"
+            :status-options="statusOptions"
+            :default-status="sec.title"
+            @upsert="handleTaskUpsert"
+            @delete="handleTaskDelete"
+            @move="handleTaskMove"
           />
         </article>
 
         <!-- Add Section area -->
         <div class="addSection" @click.stop>
-          <!-- Inline editor when clicking Add Section -->
           <template v-if="addingSection">
-            <SectionInlineEditor  
-            v-model="newSectionTitle" 
-            placeholder="Section name" 
-            @save="saveNewSection"
-            @cancel="cancelNewSection"
-           />
+            <SectionInlineEditor
+              v-model="newSectionTitle"
+              placeholder="Section name"
+              @save="saveNewSection"
+              @cancel="cancelNewSection"
+            />
           </template>
 
           <template v-else>
@@ -68,6 +91,16 @@
         </div>
       </div>
     </div>
+
+    <!-- TABLE VIEW -->
+    <div v-else class="tableView" @click.stop>
+      <TaskTable
+        :sections="sections"
+        :status-options="statusOptions"
+        @upsert="handleTaskUpsert"
+        @delete="handleTaskDelete"
+      />
+    </div>
   </section>
 </template>
 
@@ -77,9 +110,13 @@ import { uniqueId } from "lodash";
 import MenuPopUp from "./MenuPopUp.vue";
 import TaskList from "./TaskList.vue";
 import SectionInlineEditor from "./SectionInlineEditor.vue";
+import TaskTable from "./TaskTable.vue";
 
 const sections = ref([{ id: 1, title: "Todo", tasks: [] }]);
 const statusOptions = computed(() => sections.value.map((s) => s.title));
+
+/** VIEW MODE */
+const viewMode = ref("board"); // "board" | "table"
 
 /** SECTION MENU */
 const menuOpenFor = ref(null);
@@ -142,7 +179,6 @@ function saveSectionEdit(sectionId) {
   const oldTitle = sec.title;
   sec.title = title;
 
-  // update tasks status if they used old section title
   sec.tasks.forEach((t) => {
     if (t.status === oldTitle) t.status = title;
   });
@@ -217,13 +253,9 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 
   if (newIndex === fromIndex) return;
 
-  // remove task from old position
   const [task] = sec.tasks.splice(fromIndex, 1);
-
-  // insert task into new position
   sec.tasks.splice(newIndex, 0, task);
 }
-
 </script>
 
 <style scoped>
@@ -247,10 +279,41 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
   padding: 20px;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .dashboard-title {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: 0.2px;
+}
+
+.viewToggle {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.toggleBtn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toggleBtn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .board-row {
@@ -299,5 +362,10 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 .sectionTitleWrap {
   flex: 1;
   margin-right: 10px;
+}
+
+/* Table container */
+.tableView {
+  padding: 10px;
 }
 </style>

@@ -26,6 +26,7 @@
   
   const emit = defineEmits(["update:modelValue", "save", "cancel"]);
   
+  //local copy of value
   const localValue = ref(props.modelValue);
   
   watch(
