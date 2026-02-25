@@ -188,7 +188,7 @@ function applyMove(taskId) {
 .btn--add {
   width: fit-content;
   border: 2px solid rgba(204, 206, 206, 0.55);
-  background: transparent;
+  background:#64748b;
 }
 
 .task-row {
@@ -196,10 +196,11 @@ function applyMove(taskId) {
 }
 
 .task-card {
-  border: 3px solid white;
+  border: 3px solid black;
   border-radius: 10px;
   padding: 8px;
   margin-top: 10px;
+  background-color: #fff7ed;
 }
 
 .task-title {
@@ -222,8 +223,9 @@ function applyMove(taskId) {
   width: 30px;
   height: 30px;
   padding: 5px;
-  border: none;
-  background-color: #263d70;
+  border: 1px solid;
+  border-radius: 5px;
+  background-color: #6194d7;
   color: white;
 }
 

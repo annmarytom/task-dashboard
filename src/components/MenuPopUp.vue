@@ -79,7 +79,7 @@ function onDelete() {
 .iconBtn {
     width: 25px;
     height: 25px;
-    color: white;
+    color: black;
     background-color: transparent;
     border: none;
     cursor: pointer;

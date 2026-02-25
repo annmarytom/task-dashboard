@@ -99,6 +99,7 @@
         :status-options="statusOptions"
         @upsert="handleTaskUpsert"
         @delete="handleTaskDelete"
+        @move="handleTaskMove"
       />
     </div>
   </section>
@@ -264,7 +265,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
   min-height: 100vh;
   background: #f4f5f7;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: #e5e7eb;
+  color: black;
   border: 1px solid gray;
   border-radius: 10px;
   margin: 20px;
@@ -290,6 +291,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: 0.2px;
+  color: white;
 }
 
 .viewToggle {
@@ -306,7 +308,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: transparent;
-  color: white;
+  color: black;
   cursor: pointer;
   font-weight: 600;
 }
@@ -328,7 +330,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 .section {
   width: 335px;
   flex: 0 0 auto;
-  background: #263d70;
+  background: white;
   border: 2px solid rgba(45, 212, 191, 0.55);
   border-radius: 18px;
   padding: 14px;
@@ -344,7 +346,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 .btn {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.06);
-  color: #e5e7eb;
+  color: black;
   padding: 10px 14px;
   border-radius: 12px;
   cursor: pointer;
@@ -352,7 +354,7 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 
 .btn--primary {
   border: 2px solid rgba(204, 206, 206, 0.55);
-  background: #263d70;
+  background: #f97316;
   font-weight: 700;
 }
 

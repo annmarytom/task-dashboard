@@ -144,8 +144,8 @@ function submit() {
 .taskForm {
   width: 100%;
   margin-top: 10px;
-  background-color: #263d70;
-  border: 3px solid rgb(233 220 220);
+  background-color: #fff7ed;
+  border: 3px solid black;
   border-radius: 15px;
   padding: 14px;
 }
@@ -154,10 +154,11 @@ function submit() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
 }
 
 .taskForm-title {
-  color: white;
+  color: black;
   font-size: 16px;
   font-weight: 700;
 }
@@ -184,7 +185,7 @@ function submit() {
 }
 
 .label {
-  color: white;
+  color: rgb(13, 3, 3);
   font-family: Arial, Helvetica, sans-serif;
   font-size: small;
 }
@@ -196,7 +197,7 @@ function submit() {
   border-radius: 10px;
   background-color: transparent;
   padding: 12px;
-  color: #e5e7eb;
+  color: #030407;
 }
 
 textarea.input {
@@ -221,7 +222,7 @@ textarea.input {
   border-radius: 8px;
   cursor: pointer;
   border: 1px solid #444;
-  background: transparent;
+  background: #6194d7;
   color: white;
 }
 .cancel-button{
@@ -229,7 +230,7 @@ textarea.input {
     border-radius: 8px;
     cursor: pointer;
     border: 1px solid #444;
-    background: transparent;
+    background: #6194d7;
     color: white;
 }
 </style>
