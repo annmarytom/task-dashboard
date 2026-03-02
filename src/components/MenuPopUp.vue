@@ -1,6 +1,6 @@
 <template>
-    <div class="menuWrap" @click.stop>
-        <button class="iconBtn" aria-label="Menu" @click="toggle">
+    <div class="menu-wrap" @click.stop>
+        <button class="icon-btn" aria-label="Menu" @click="toggle">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -9,9 +9,9 @@
 
         </button>
 
-        <div v-if="open" class="menuPopup">
-            <button class="menuItem" @click="onEdit">Edit</button>
-            <button class="menuItem danger" @click="onDelete">Delete</button>
+        <div v-if="open" class="menu-popup">
+            <button class="menu-item" @click="onEdit">Edit</button>
+            <button class="menu-item danger" @click="onDelete">Delete</button>
         </div>
     </div>
 </template>
@@ -35,11 +35,11 @@ function onDelete() {
 </script>
 
 <style scoped>
-.menuWrap {
+.menu-wrap {
     position: relative;
 }
 
-.menuPopup {
+.menu-popup {
     position: absolute;
     top: 34px;
     right: 0;
@@ -52,7 +52,7 @@ function onDelete() {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
-.menuItem {
+.menu-item {
     width: 100%;
     text-align: left;
     padding: 10px 10px;
@@ -64,7 +64,7 @@ function onDelete() {
     font-size: 14px;
 }
 
-.menuItem:hover {
+.menu-item:hover {
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -72,14 +72,14 @@ function onDelete() {
     color: #fca5a5;
 }
 
-.menuItem.danger:hover {
+.menu-item.danger:hover {
     background: rgba(248, 113, 113, 0.15);
 }
 
-.iconBtn {
+.icon-btn {
     width: 25px;
     height: 25px;
-    color: white;
+    color: black;
     background-color: transparent;
     border: none;
     cursor: pointer;

@@ -1,50 +1,30 @@
 <template>
-  <div class="taskForm">
-    <div class="taskForm-header">
-      <h3 class="taskForm-title">
-        {{ isEdit ? "Edit Task" : "Add New Task" }}
-      </h3>
+  <div class="task-form">
+    <div class="task-form-header">
+      <h3 class="task-form-title">{{ isEdit ? "Edit Task" : "Add New Task" }}</h3>
 
-      <button class="taskForm-close" type="button" @click="cancel">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="size-6"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18 18 6M6 6l12 12"
-          />
+      <button class="close-btn" type="button" @click="cancel">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
 
     <form class="form" @submit.prevent="submit">
-      <div class="input-fields">
-        <label class="label">Task Name * </label>
-        <input
-          v-model.trim="name"
-          type="text"
-          class="input"
-          placeholder="Ex:Build Logic"
-        />
+      <div class="field">
+        <label class="label">Task Name *</label>
+        <input v-model.trim="name" type="text" class="input" placeholder="Enter Your Task" />
       </div>
 
-      <div class="input-fields">
+      <div class="field">
         <label class="label">Description</label>
-        <textarea
-          v-model.trim="description"
-          class="input"
-          placeholder="Details"
-        ></textarea>
+        <textarea v-model.trim="description" class="input area" placeholder="Description">
+        </textarea>
       </div>
 
-      <div class="input-fields-meta">
-        <div class="input-fields">
+      <div class="row">
+        <div class="field">
           <label class="label">Status</label>
           <select v-model="status" class="input">
             <option v-for="opt in statusOptions" :key="opt" :value="opt">
@@ -53,19 +33,15 @@
           </select>
         </div>
 
-        <div class="input-fields">
+        <div class="field">
           <label class="label">Due Date</label>
           <input v-model="dueDate" type="date" class="input" />
         </div>
       </div>
 
       <div class="actions">
-        <button class="cancel-button" type="button" @click="cancel">
-          Cancel
-        </button>
-        <button class="add-button" type="submit">
-          {{ isEdit ? "Save" : "Add" }}
-        </button>
+        <button class="ghost" type="button" @click="cancel">Cancel</button>
+        <button class="primary" type="submit">{{ isEdit ? "Save" : "Add" }}</button>
       </div>
     </form>
   </div>
@@ -77,7 +53,6 @@ import { computed, ref, watch } from "vue";
 const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
   defaultStatus: { type: String, default: "" },
-  //  if provided => edit mode
   initialTask: { type: Object, default: null },
 });
 
@@ -85,12 +60,11 @@ const emit = defineEmits(["cancel", "save"]);
 
 const isEdit = computed(() => !!props.initialTask);
 
-// form fields
 const name = ref("");
 const description = ref("");
 const status = ref(props.defaultStatus || props.statusOptions[0] || "Todo");
 const dueDate = ref("");
-//  whenever we open modal for edit, fill values
+
 watch(
   () => props.initialTask,
   (t) => {
@@ -101,7 +75,6 @@ watch(
         t.status ?? (props.defaultStatus || props.statusOptions[0] || "Todo");
       dueDate.value = t.dueDate ?? "";
     } else {
-      // add mode reset
       name.value = "";
       description.value = "";
       status.value = props.defaultStatus || props.statusOptions[0] || "Todo";
@@ -111,13 +84,11 @@ watch(
   { immediate: true }
 );
 
-// if dashboard changes default status while in add mode
 watch(
   () => props.defaultStatus,
   (v) => {
-    if (!isEdit.value) {
+    if (!isEdit.value)
       status.value = v || props.statusOptions[0] || "Todo";
-    }
   }
 );
 
@@ -127,7 +98,7 @@ function cancel() {
 
 function submit() {
   if (!name.value.trim()) return;
-  //  if edit, keep same id
+
   const task = {
     id: props.initialTask?.id ?? Date.now(),
     name: name.value.trim(),
@@ -141,95 +112,104 @@ function submit() {
 </script>
 
 <style scoped>
-.taskForm {
-  width: 100%;
-  margin-top: 10px;
-  background-color: #263d70;
-  border: 3px solid rgb(233 220 220);
-  border-radius: 15px;
+.task-form {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
   padding: 14px;
 }
 
-.taskForm-header {
+.task-form-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
-.taskForm-title {
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
+.task-form-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: #111827;
 }
 
-.taskForm-close {
-  background: transparent;
-  border: none;
-  color: white;
+.close-btn {
+  width: 25px;
+  height: 25px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   cursor: pointer;
-  font-size: 16px;
+  font-weight: 900;
 }
 
 .form {
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
+  gap: 12px;
 }
 
-.input-fields {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
 }
 
 .label {
-  color: white;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: small;
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
 }
 
 .input {
-  width: auto;
-  height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  background-color: transparent;
-  padding: 12px;
-  color: #e5e7eb;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  outline: none;
+  color: #111827;
+  background: #ffffff;
 }
 
-textarea.input {
-  height: 80px;
+.input:focus {
+  border-color: #f97316;
+}
+
+.area {
+  min-height: 78px;
   resize: vertical;
+  padding-top: 10px;
 }
 
-.input-fields-meta {
+.row {
   display: flex;
   gap: 10px;
 }
 
 .actions {
   display: flex;
-  justify-content: end;
-  gap: 12px;
-  margin-top: 14px;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
 }
 
-.add-button {
-  padding: 8px 12px;
-  border-radius: 8px;
+.primary {
+  border: none;
+  background: #f97316;
+  color: #ffffff;
+  font-weight: 900;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  border: 1px solid #444;
-  background: transparent;
-  color: white;
 }
-.cancel-button{
-  padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 1px solid #444;
-    background: transparent;
-    color: white;
+
+.ghost {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 900;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
 }
 </style>
