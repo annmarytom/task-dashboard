@@ -1,62 +1,80 @@
 <template>
-  <div class="tableCard" @click="closeAllMenus">
-    <!-- Header -->
-    <div class="tableHeader">
- 
-
-      <!-- Compact inline create -->
-      <button class="createBtn" type="button" @click.stop="openCreateInTab">
+  <div class="table-card" @click="closeAllMenus">
+    <!-- Header row -->
+    <div class="table-header">
+      <button class="create-btn" type="button" @click.stop="openCreateInTab">
         + Create task
       </button>
     </div>
 
-    <!-- Tabs = Sections -->
+    <!-- Tabs -->
     <div class="tabs" @click.stop>
-      <button
-        v-for="sec in sections"
-        :key="sec.id"
-        class="tab"
-        :class="{ active: activeSectionId === sec.id }"
-        type="button"
-        @click="activeSectionId = sec.id"
+      <button 
+      v-for="sec in sections" 
+      :key="sec.id" 
+      class="tab" 
+      :class="{ active: activeSectionId === sec.id }"
+      type="button" 
+      @click="activeSectionId = sec.id"
       >
         {{ sec.title }} ({{ (sec.tasks || []).length }})
       </button>
+
+     <!-- Add Section tab -->
+<div class="addSectionTab">
+  <button
+    v-if="!addingSection"
+    class="tab dashed"
+    type="button"
+    @click="openAddSection"
+  >
+    + Add Section
+  </button>
+
+  <div v-else class="addSectionEditor">
+    <SectionInlineEditor
+      v-model="newSectionTitle"
+      placeholder="Section name"
+      @save="saveAddSection"
+      @cancel="cancelAddSection"
+    />
+  </div>
+</div>
     </div>
 
     <!-- Table -->
-    <div class="tableScroll" @click.stop>
-      <table class="taskTable">
+    <div class="table-scroll" @click.stop>
+      <table class="task-table">
         <thead>
           <tr>
             <th>Task name</th>
             <th>Description</th>
-            <th style="width: 180px;">Status</th>
+            <th style="width: 180px">Status</th>
             <th style="width: 160px;">Due date</th>
             <th style="width: 170px;">Action</th>
           </tr>
         </thead>
 
         <tbody>
-          <!-- Compact CREATE row -->
-          <tr v-if="addingTask" class="inlineRow">
+          <!-- Create row -->
+          <tr v-if="addingTask" class="inlinRow">
             <td>
-              <input
-                class="cellInput"
-                type="text"
-                placeholder="Task name *"
-                v-model.trim="addDraft.name"
-                @keydown.enter.prevent="saveCreate"
+              <input 
+              class="cell-input" 
+              type="text"
+              placeholder="Task name *" 
+              v-model.trim="addDraft.name"
+              @keydown.enter.prevent="saveCreate" 
               />
             </td>
 
             <td>
-              <input
-                class="cellInput"
-                type="text"
-                placeholder="Description"
-                v-model.trim="addDraft.description"
-                @keydown.enter.prevent="saveCreate"
+              <input 
+              class="cell-input" 
+              type="text" 
+              placeholder="Description"
+              v-model.trim="addDraft.description"
+              @keydown.enter.prevent="saveCreate" 
               />
             </td>
 
@@ -73,7 +91,7 @@
             </td>
 
             <td>
-              <div class="rowActions">
+              <div class="row-actions">
                 <button class="btnPrimary" type="button" @click="saveCreate">
                   Add
                 </button>
@@ -86,32 +104,27 @@
 
           <!-- Existing rows -->
           <tr v-for="row in activeRows" :key="row.task.id">
-            <!-- NAME -->
+            <!-- name -->
             <td>
               <template v-if="isEditing(row)">
-                <input class="cellInput" type="text" v-model.trim="editDraft.name" />
+                <input class="cell-input" type="text" v-model.trim="editDraft.name" />
               </template>
               <template v-else>
                 <div class="name">{{ row.task.name }}</div>
               </template>
             </td>
 
-            <!-- DESCRIPTION -->
+            <!-- description -->
             <td>
               <template v-if="isEditing(row)">
-                <input
-                  class="cellInput"
-                  type="text"
-                  v-model.trim="editDraft.description"
-                  placeholder="-"
-                />
+                <input class="cell-input" type="text" v-model.trim="editDraft.description" placeholder="-" />
               </template>
               <template v-else>
                 <div class="desc">{{ row.task.description || "-" }}</div>
               </template>
             </td>
 
-            <!-- STATUS -->
+            <!-- status -->
             <td>
               <template v-if="isEditing(row)">
                 <select class="cellSelect" v-model="editDraft.status">
@@ -121,11 +134,12 @@
                 </select>
               </template>
               <template v-else>
-                <span class="statusPill">{{ row.task.status }}</span>
+                <span class="statusDot"></span>
+                <span class="statusText">{{ row.task.status }}</span>
               </template>
             </td>
 
-            <!-- DUE DATE -->
+            <!-- due date-->
             <td>
               <template v-if="isEditing(row)">
                 <input class="cellDate" type="date" v-model="editDraft.dueDate" />
@@ -135,11 +149,10 @@
               </template>
             </td>
 
-            <!-- ACTION -->
-            <td class="actionCell">
-              <!-- Editing row -> Save/Cancel -->
+            <!-- action -->
+            <td class="action-cell ">
               <template v-if="isEditing(row)">
-                <div class="rowActions">
+                <div class="row-actions">
                   <button class="btnPrimary" type="button" @click="saveEdit(row)">
                     Save
                   </button>
@@ -149,37 +162,40 @@
                 </div>
               </template>
 
-              <!-- Normal row -> action menu -->
               <template v-else>
-                <button class="dotsBtn" type="button" @click.stop="toggleMenu(row.task.id)">
-                  ⋯
+                <button class="dots-btn" type="button" @click.stop="toggleMenu(row.task.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                  </svg>
+
                 </button>
 
                 <div v-if="menuOpenFor === row.task.id" class="menu">
-                  <button class="menuItem" type="button" @click="startEdit(row)">
+                  <button class="menu-item" type="button" @click="startEdit(row)">
                     Edit
                   </button>
 
-                  <button class="menuItem" type="button" @click="toggleInterchange(row.task.id)">
+                  <button class="menu-item" type="button" @click="toggleInterchange(row.task.id)">
                     Interchange
                   </button>
 
-                  <button class="menuItem danger" type="button" @click="onDelete(row.sectionId, row.task.id)">
+                  <button class="menu-item danger" type="button" @click="onDelete(row.sectionId, row.task.id)">
                     Delete
                   </button>
 
-                  <!-- Interchange popup -->
                   <div v-if="moveOpenFor === row.task.id" class="moveBox" @click.stop>
-                    <div class="moveLabel">Move position to:</div>
+                    <div class="move-label">Move position to:</div>
                     <div class="moveRow">
-                      <input
-                        class="moveInput"
-                        type="number"
-                        min="1"
-                        :max="activeRows.length"
-                        v-model.number="moveTo"
-                        @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
-                      />
+                      <input 
+                      class="moveInput" 
+                      type="number" 
+                      min="1"
+                      :max="activeRows.length"
+                      v-model.number="moveTo"
+                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
+                       />
                       <button class="moveBtn" type="button" @click="applyMove(row.sectionId, row.task.id)">
                         Move
                       </button>
@@ -202,15 +218,15 @@
 
 <script setup>
 import { computed, ref, watch } from "vue";
+import SectionInlineEditor from "./SectionInlineEditor.vue";
 
 const props = defineProps({
   sections: { type: Array, default: () => [] },
   statusOptions: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(["upsert", "delete", "move"]);
+const emit = defineEmits(["upsert", "delete", "move", "add-section-requested"]);
 
-/** Tabs */
 const activeSectionId = ref(null);
 
 watch(
@@ -234,23 +250,47 @@ const activeRows = computed(() => {
   return (sec.tasks || []).map((task) => ({ sectionId: sec.id, task }));
 });
 
-/** Close create/edit when switching tab */
 watch(activeSectionId, () => {
   addingTask.value = false;
   closeAllMenus();
   cancelEdit();
+  cancelAddSection();
 });
 
-/** Compact CREATE row state */
+/** create */
 const addingTask = ref(false);
 const addDraft = ref({ name: "", description: "", status: "", dueDate: "" });
+const addingSection = ref(false);
+const newSectionTitle = ref("");
 
+function openAddSection() {
+  addingSection.value = true;
+  newSectionTitle.value = "";
+  closeAllMenus();
+  cancelEdit();
+  addingTask.value = false; // optional: closes create-task row if you want
+}
+
+function cancelAddSection() {
+  addingSection.value = false;
+  newSectionTitle.value = "";
+}
+
+function saveAddSection(title) {
+  const v = (title || "").trim();
+  if (!v) return;
+
+  emit("add-section-requested", v);
+
+  addingSection.value = false;
+  newSectionTitle.value = "";
+}
 function openCreateInTab() {
   addingTask.value = true;
   addDraft.value = {
     name: "",
     description: "",
-    status: activeSectionTitle.value, // default to current tab
+    status: activeSectionTitle.value,
     dueDate: "",
   };
   closeAllMenus();
@@ -283,7 +323,7 @@ function saveCreate() {
   closeCreate();
 }
 
-/** Menu */
+/** menu */
 const menuOpenFor = ref(null);
 function toggleMenu(taskId) {
   menuOpenFor.value = menuOpenFor.value === taskId ? null : taskId;
@@ -312,12 +352,11 @@ function closeMove() {
 function applyMove(sectionId, taskId) {
   const newIndex = (moveTo.value || 1) - 1;
   if (newIndex < 0 || newIndex >= activeRows.value.length) return;
-
   emit("move", { sectionId, taskId, newIndex });
   closeAllMenus();
 }
 
-/** Inline Edit row */
+/** edit */
 const editingKey = ref(null);
 const editDraft = ref({ name: "", description: "", status: "", dueDate: "" });
 
@@ -373,79 +412,89 @@ function onDelete(sectionId, taskId) {
 </script>
 
 <style scoped>
-.tableCard {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 12px;
+.table-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   color: #0f172a;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-.tableHeader {
+.table-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  justify-content: flex-start;
+  margin-bottom: 12px;
 }
 
-
-.createBtn {
+.create-btn {
   border: none;
   background: #f97316;
-  color: #fff;
+  color: #ffffff;
   font-weight: 900;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   gap: 14px;
   padding: 8px 2px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+  margin-bottom: 12px;
   overflow-x: auto;
 }
+
 .tab {
   border: none;
   background: transparent;
   color: #64748b;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
-  padding: 8px 4px;
-  border-bottom: 2px solid transparent;
+  padding: 10px 12px;
+  border-radius: 12px;
   white-space: nowrap;
 }
+
 .tab.active {
+  background: #fff7ed;
   color: #f97316;
-  border-bottom-color: #f97316;
 }
 
-/* Table */
-.tableScroll {
+.tab.dashed {
+  border: 2px dashed #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+
+.table-scroll {
   overflow: auto;
-  height: 560px;
+  height: 520px;
   border-radius: 12px;
 }
-.taskTable {
+
+.task-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 860px;
 }
-.taskTable th,
-.taskTable td {
-  padding: 12px 10px;
+
+.task-table th,
+.task-table td {
+  padding: 14px 12px;
   border-bottom: 1px solid #f1f5f9;
   text-align: left;
   vertical-align: middle;
 }
-.taskTable th {
+
+.task-table th {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: #ffffff;
   z-index: 2;
   font-size: 12px;
   color: #64748b;
@@ -455,94 +504,104 @@ function onDelete(sectionId, taskId) {
 .name {
   font-weight: 900;
 }
+
 .desc {
   color: #334155;
 }
 
-/* Compact row controls */
 .inlineRow {
   background: #fff7ed;
 }
-.cellInput,
+
+.cell-input,
 .cellSelect,
 .cellDate {
   width: 100%;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   color: #0f172a;
-  padding: 6px 10px;
+  padding: 8px 10px;
   outline: none;
 }
-.cellInput:focus,
+
+.cell-input:focus,
 .cellSelect:focus,
 .cellDate:focus {
   border-color: #f97316;
 }
 
-.statusPill {
-  display: inline-flex;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  font-weight: 800;
-  font-size: 12px;
-}
-
-/* Row action buttons */
-.rowActions {
+.row-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: flex-end;
   align-items: center;
 }
+
 .btnPrimary {
   border: none;
   background: #f97316;
-  color: #fff;
+  color: #ffffff;
   font-weight: 900;
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.btnGhost {
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #0f172a;
-  font-weight: 900;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
-/* Menu */
-.actionCell {
+.btnGhost {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 900;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #f97316;
+  margin-right: 8px;
+}
+
+.statusText {
+  font-weight: 800;
+}
+
+
+.action-cell {
   position: relative;
 }
-.dotsBtn {
-  width: 36px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+
+.dots-btn {
+ width:20px;
+ height: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   cursor: pointer;
   font-weight: 900;
 }
+
 .menu {
   position: absolute;
-  top: 40px;
+  top: 44px;
   right: 0;
   width: 190px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
   padding: 8px;
   z-index: 50;
 }
-.menuItem {
+
+.menu-item {
   width: 100%;
   text-align: left;
   border: none;
@@ -550,55 +609,63 @@ function onDelete(sectionId, taskId) {
   padding: 10px 10px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 900;
   color: #0f172a;
 }
-.menuItem:hover {
+
+.menu-item:hover {
   background: #f8fafc;
 }
-.menuItem.danger {
+
+.menu-item.danger {
   color: #ef4444;
 }
-.menuItem.danger:hover {
+
+.menu-item.danger:hover {
   background: #fef2f2;
 }
 
-/* Move box */
+
 .moveBox {
   margin-top: 8px;
   padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   background: #f8fafc;
 }
-.moveLabel {
+
+.move-label {
   font-size: 12px;
   font-weight: 900;
   color: #334155;
   margin-bottom: 8px;
 }
+
 .moveRow {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+
 .moveInput {
   width: 70px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  padding: 6px 10px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
   outline: none;
 }
+
 .moveBtn {
-  height: 34px;
+  height: 36px;
   padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   cursor: pointer;
   font-weight: 900;
 }
+
 .moveHint {
   font-size: 11px;
   color: #64748b;
@@ -609,6 +676,14 @@ function onDelete(sectionId, taskId) {
   text-align: center;
   padding: 18px;
   color: #64748b;
-  font-weight: 800;
+  font-weight: 900;
+}
+.addSectionTab {
+  display: flex;
+  align-items: center;
+}
+
+.addSectionEditor {
+  min-width: 260px;
 }
 </style>
