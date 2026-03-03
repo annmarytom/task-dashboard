@@ -117,6 +117,12 @@
         @add-section-requested="saveNewSection"
         />
       </div>
+     <Snackbar 
+      :open="snack.open" 
+      :message="snack.message" 
+      :duration="snack.duration"
+      @close="closeSnack" 
+      />
     </section>
   </div>
 </template>
@@ -127,6 +133,7 @@ import { uniqueId } from "lodash";
 import TaskList from "./TaskList.vue";
 import SectionInlineEditor from "./SectionInlineEditor.vue";
 import TaskTable from "./TaskTable.vue";
+import Snackbar from "./Snackbar.vue";
 
 const sections = ref([
   { id: 1, title: "Todo", tasks: [] }
@@ -202,6 +209,7 @@ function saveSectionEdit(sectionId) {
 
   editingSectionId.value = null;
   newSectionTitle.value = "";
+  showSnack(`Section updated to "${title}"`);
 }
  
 
@@ -220,6 +228,7 @@ function deleteSection(sectionId) {
         if (t.status === deletedTitle) t.status = fallback;
       });
     });
+    showSnack(`Section "${deletedTitle}" deleted`);
   }
 
   closeAllMenus();
@@ -274,6 +283,23 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 
   const [task] = sec.tasks.splice(fromIndex, 1);
   sec.tasks.splice(newIndex, 0, task);
+}
+
+/** SNACKBAR */
+const snack = ref({
+  open: false,
+  message: "",
+  duration: 3000,
+});
+
+function showSnack(message, duration = 5000) {
+  snack.value.open = true;
+  snack.value.message = message;
+  snack.value.duration = duration;
+}
+
+function closeSnack() {
+  snack.value.open = false;
 }
 </script>
 
