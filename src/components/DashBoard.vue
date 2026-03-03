@@ -5,8 +5,7 @@
       <header class="topbar">
         <div class="top-bar-left">
           <h1 class="title">Task Management</h1>
-
-        </div>
+                </div>
 
         <!-- Toggle -->
         <div class="view-toggle" @click.stop>
@@ -15,7 +14,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
+                  d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504-1.125-1.125 1.125m1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25" />
               </svg>
             </span>
             Table View
@@ -41,11 +40,15 @@
         <div class="board-row">
           <article v-for="sec in sections" :key="sec.id" class="col">
             <div class="col-header">
-              <!-- Inline edit title -->
+               <!-- Inline edit title -->
               <div class="col-title">
                 <template v-if="editingSectionId === sec.id">
-                  <SectionInlineEditor v-model="newSectionTitle" placeholder="Section name"
-                    @save="saveSectionEdit(sec.id)" @cancel="cancelSectionEdit" />
+                  <SectionInlineEditor
+                    v-model="newSectionTitle"
+                    placeholder="Section name"
+                    @save="renameSection(sec.id, $event)"
+                    @cancel="cancelSectionEdit"
+                  />
                 </template>
 
                 <template v-else>
@@ -59,41 +62,39 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
                   </svg>
-
                 </button>
-                <button class="icon-btn danger" type="button" title="Delete" @click.stop="deleteSection(sec.id)">
+                <button class="icon-btn danger" type="button" title="Delete" @click.stop="requestDeleteSection(sec.id)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                   </svg>
-
                 </button>
               </div>
             </div>
-           <!-- TaskList  -->
-            <TaskList 
-            :section-id="sec.id" 
-            :section-title="sec.title" 
-            :tasks="sec.tasks" 
-            :status-options="statusOptions"
-            :default-status="sec.title"
-            @upsert="handleTaskUpsert"
-            @delete="handleTaskDelete"
-            @move="handleTaskMove" 
-              />
+               <!-- TaskList  -->
+            <TaskList
+              :section-id="sec.id"
+              :section-title="sec.title"
+              :tasks="sec.tasks"
+              :status-options="statusOptions"
+              :default-status="sec.title"
+              @upsert="handleTaskUpsert"
+              @delete="handleTaskDelete"
+              @move="handleTaskMove"
+            />
           </article>
 
           <!-- Add Section column -->
           <div class="addCol" @click.stop>
             <template v-if="addingSection">
-              <SectionInlineEditor 
-              v-model="newSectionTitle" 
-              placeholder="Section name" 
-              @save="saveNewSection"
-              @cancel="cancelNewSection" 
+              <SectionInlineEditor
+                v-model="newSectionTitle"
+                placeholder="Section name"
+                @save="saveNewSection"
+                @cancel="cancelNewSection"
               />
             </template>
 
@@ -108,20 +109,31 @@
 
       <!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
-        <TaskTable 
-        :sections="sections"
-        :status-options="statusOptions" 
-        @upsert="handleTaskUpsert"
-        @delete="handleTaskDelete"
-        @move="handleTaskMove" 
-        @add-section-requested="saveNewSection"
+        <TaskTable
+          :sections="sections"
+          :status-options="statusOptions"
+          @upsert="handleTaskUpsert"
+          @delete="handleTaskDelete"
+          @move="handleTaskMove"
+          @add-section-requested="saveNewSection"
+          @rename-section-requested="renameSection"
+          @delete-section-requested="requestDeleteSection"
         />
       </div>
-     <Snackbar 
-      :open="snack.open" 
-      :message="snack.message" 
-      :duration="snack.duration"
-      @close="closeSnack" 
+      <Snackbar
+        :open="snack.open"
+        :message="snack.message"
+        :duration="snack.duration"
+        @close="closeSnack"
+      />
+
+      <!-- Confirm dialog for BOTH views -->
+      <ConfirmDialog
+        :open="confirm.open"
+        :title="confirm.title"
+        :message="confirm.message"
+        @confirm="confirmDelete"
+        @cancel="closeConfirm"
       />
     </section>
   </div>
@@ -134,6 +146,7 @@ import TaskList from "./TaskList.vue";
 import SectionInlineEditor from "./SectionInlineEditor.vue";
 import TaskTable from "./TaskTable.vue";
 import Snackbar from "./Snackbar.vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
 
 const sections = ref([
   { id: 1, title: "Todo", tasks: [] }
@@ -141,8 +154,7 @@ const sections = ref([
 
 const statusOptions = computed(() => sections.value.map((s) => s.title));
 
-/** VIEW MODE */
-const viewMode = ref("board"); // "board" | "table"
+const viewMode = ref("board");
 
 /** SECTION MENU */
 const menuOpenFor = ref(null);
@@ -168,9 +180,12 @@ function cancelNewSection() {
 }
 
 function saveNewSection(title) {
+  const v = (title || "").trim();
+  if (!v) return;
+
   sections.value.push({
     id: uniqueId("section_"),
-    title,
+    title: v,
     tasks: [],
   });
   addingSection.value = false;
@@ -192,28 +207,60 @@ function cancelSectionEdit() {
   newSectionTitle.value = "";
 }
 
-function saveSectionEdit(sectionId) {
-  const title = newSectionTitle.value.trim();
-  if (!title) return;
+/** reusable rename for both board + table */
+function renameSection(sectionId, title) {
+  const v = (title || "").trim();
+  if (!v) return;
 
   const sec = sections.value.find((s) => s.id === sectionId);
   if (!sec) return;
 
   const oldTitle = sec.title;
-  sec.title = title;
+  sec.title = v;
 
-  // update tasks that were pointing to the old title
+  // update tasks status values
   sec.tasks.forEach((t) => {
-    if (t.status === oldTitle) t.status = title;
+    if (t.status === oldTitle) t.status = v;
   });
 
   editingSectionId.value = null;
   newSectionTitle.value = "";
-  showSnack(`Section updated to "${title}"`);
+  showSnack(`Section updated to "${v}"`, 3000);
 }
- 
 
-function deleteSection(sectionId) {
+/** confirmation state */
+const confirm = ref({
+  open: false,
+  sectionId: null,
+  title: "Confirm delete",
+  message: "",
+});
+
+function requestDeleteSection(sectionId) {
+  const sec = sections.value.find((s) => s.id === sectionId);
+  if (!sec) return;
+
+  confirm.value.open = true;
+  confirm.value.sectionId = sectionId;
+  confirm.value.title = `Delete section "${sec.title}"?`;
+  confirm.value.message = `All tasks in this section will be deleted.`;
+  closeAllMenus();
+}
+
+function closeConfirm() {
+  confirm.value.open = false;
+  confirm.value.sectionId = null;
+}
+
+function confirmDelete() {
+  const sectionId = confirm.value.sectionId;
+  closeConfirm();
+  if (!sectionId) return;
+  doDeleteSection(sectionId);
+}
+
+
+function doDeleteSection(sectionId) {
   const secToDelete = sections.value.find((s) => s.id === sectionId);
   const deletedTitle = secToDelete?.title;
 
@@ -228,7 +275,7 @@ function deleteSection(sectionId) {
         if (t.status === deletedTitle) t.status = fallback;
       });
     });
-    showSnack(`Section "${deletedTitle}" deleted`);
+    showSnack(`Section "${deletedTitle}" deleted`, 3000);
   }
 
   closeAllMenus();
@@ -286,9 +333,9 @@ function handleTaskMove({ sectionId, taskId, newIndex }) {
 }
 
 /** SNACKBAR */
-const snack = ref({
-  open: false,
-  message: "",
+const snack = ref({ 
+  open: false, 
+  message: "", 
   duration: 3000,
 });
 

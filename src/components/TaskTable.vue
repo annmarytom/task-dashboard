@@ -1,6 +1,5 @@
 <template>
   <div class="table-card" @click="closeAllMenus">
-    <!-- Header row -->
     <div class="table-header">
       <button class="create-btn" type="button" @click.stop="openCreateInTab">
         + Create task
@@ -9,37 +8,73 @@
 
     <!-- Tabs -->
     <div class="tabs" @click.stop>
-      <button 
-      v-for="sec in sections" 
-      :key="sec.id" 
-      class="tab" 
-      :class="{ active: activeSectionId === sec.id }"
-      type="button" 
-      @click="activeSectionId = sec.id"
+      <button
+        v-for="sec in sections"
+        :key="sec.id"
+        class="tab"
+        :class="{ active: activeSectionId === sec.id }"
+        type="button"
+        @click="activeSectionId = sec.id"
       >
-        {{ sec.title }} ({{ (sec.tasks || []).length }})
+        <!-- NORMAL TAB -->
+        <template v-if="editingSectionId !== sec.id">
+          <span class="tab-text">{{ sec.title }} ({{ (sec.tasks || []).length }})</span>
+
+          <!-- hover actions -->
+          <span class="tab-actions" @click.stop>
+            <button class="tab-icon" type="button" title="Edit" @click="startEditSection(sec)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                  </svg>
+            </button>
+            <button class="tab-icon danger" type="button" title="Delete" @click="requestDeleteSection(sec)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                  </svg>
+            </button>
+          </span>
+        </template>
+
+        <!-- INLINE EDIT TAB -->
+        <template v-else>
+          <div class="tab-edit" @click.stop>
+            <input
+              class="tab-input"
+              type="text"
+              v-model.trim="editSectionTitle"
+              @keydown.enter.prevent="saveSectionEdit(sec.id)"
+              @keydown.esc.prevent="cancelSectionEdit"
+            />
+            <button class="tab-ok" type="button" title="Save" @click="saveSectionEdit(sec.id)">✓</button>
+            <button class="tab-x" type="button" title="Cancel" @click="cancelSectionEdit">✕</button>
+          </div>
+        </template>
       </button>
 
-     <!-- Add Section tab -->
-<div class="addSectionTab">
-  <button
-    v-if="!addingSection"
-    class="tab dashed"
-    type="button"
-    @click="openAddSection"
-  >
-    + Add Section
-  </button>
+      <!-- Add Section tab -->
+      <div class="addSectionTab">
+        <button 
+        v-if="!addingSection" 
+        class="tab dashed" 
+        type="button"
+         @click="openAddSection"
+         >
+          + Add Section
+        </button>
 
-  <div v-else class="addSectionEditor">
-    <SectionInlineEditor
-      v-model="newSectionTitle"
-      placeholder="Section name"
-      @save="saveAddSection"
-      @cancel="cancelAddSection"
-    />
-  </div>
-</div>
+        <div v-else class="addSectionEditor">
+          <SectionInlineEditor
+            v-model="newSectionTitle"
+            placeholder="Section name"
+            @save="saveAddSection"
+            @cancel="cancelAddSection"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Table -->
@@ -59,22 +94,22 @@
           <!-- Create row -->
           <tr v-if="addingTask" class="inlinRow">
             <td>
-              <input 
-              class="cell-input" 
-              type="text"
-              placeholder="Task name *" 
-              v-model.trim="addDraft.name"
-              @keydown.enter.prevent="saveCreate" 
+              <input
+                class="cell-input"
+                type="text"
+                placeholder="Task name *"
+                v-model.trim="addDraft.name"
+                @keydown.enter.prevent="saveCreate"
               />
             </td>
 
             <td>
-              <input 
-              class="cell-input" 
-              type="text" 
-              placeholder="Description"
-              v-model.trim="addDraft.description"
-              @keydown.enter.prevent="saveCreate" 
+              <input
+                class="cell-input"
+                type="text"
+                placeholder="Description"
+                v-model.trim="addDraft.description"
+                @keydown.enter.prevent="saveCreate"
               />
             </td>
 
@@ -104,7 +139,7 @@
 
           <!-- Existing rows -->
           <tr v-for="row in activeRows" :key="row.task.id">
-            <!-- name -->
+              <!-- name -->
             <td>
               <template v-if="isEditing(row)">
                 <input class="cell-input" type="text" v-model.trim="editDraft.name" />
@@ -124,7 +159,7 @@
               </template>
             </td>
 
-            <!-- status -->
+        <!-- status -->
             <td>
               <template v-if="isEditing(row)">
                 <select class="cellSelect" v-model="editDraft.status">
@@ -139,7 +174,7 @@
               </template>
             </td>
 
-            <!-- due date-->
+        <!-- due date-->
             <td>
               <template v-if="isEditing(row)">
                 <input class="cellDate" type="date" v-model="editDraft.dueDate" />
@@ -149,7 +184,7 @@
               </template>
             </td>
 
-            <!-- action -->
+       <!-- action -->
             <td class="action-cell ">
               <template v-if="isEditing(row)">
                 <div class="row-actions">
@@ -188,14 +223,14 @@
                   <div v-if="moveOpenFor === row.task.id" class="moveBox" @click.stop>
                     <div class="move-label">Move position to:</div>
                     <div class="moveRow">
-                      <input 
-                      class="moveInput" 
-                      type="number" 
-                      min="1"
-                      :max="activeRows.length"
-                      v-model.number="moveTo"
-                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
-                       />
+                      <input
+                        class="moveInput"
+                        type="number"
+                        min="1"
+                        :max="activeRows.length"
+                        v-model.number="moveTo"
+                        @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
+                      />
                       <button class="moveBtn" type="button" @click="applyMove(row.sectionId, row.task.id)">
                         Move
                       </button>
@@ -225,7 +260,14 @@ const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(["upsert", "delete", "move", "add-section-requested"]);
+const emit = defineEmits([
+  "upsert",
+  "delete",
+  "move",
+  "add-section-requested",
+  "rename-section-requested",
+  "delete-section-requested",
+]);
 
 const activeSectionId = ref(null);
 
@@ -255,36 +297,42 @@ watch(activeSectionId, () => {
   closeAllMenus();
   cancelEdit();
   cancelAddSection();
+  cancelSectionEdit();
 });
+
+/** section edit in tab */
+const editingSectionId = ref(null);
+const editSectionTitle = ref("");
+
+function startEditSection(sec) {
+  editingSectionId.value = sec.id;
+  editSectionTitle.value = sec.title;
+  closeAllMenus();
+  cancelEdit();
+  addingTask.value = false;
+}
+
+function cancelSectionEdit() {
+  editingSectionId.value = null;
+  editSectionTitle.value = "";
+}
+
+function saveSectionEdit(sectionId) {
+  const v = (editSectionTitle.value || "").trim();
+  if (!v) return;
+  emit("rename-section-requested", sectionId, v);
+  cancelSectionEdit();
+}
+
+function requestDeleteSection(sec) {
+  // Dashboard will show the confirm dialog
+  emit("delete-section-requested", sec.id);
+}
 
 /** create */
 const addingTask = ref(false);
 const addDraft = ref({ name: "", description: "", status: "", dueDate: "" });
-const addingSection = ref(false);
-const newSectionTitle = ref("");
 
-function openAddSection() {
-  addingSection.value = true;
-  newSectionTitle.value = "";
-  closeAllMenus();
-  cancelEdit();
-  addingTask.value = false; // optional: closes create-task row if you want
-}
-
-function cancelAddSection() {
-  addingSection.value = false;
-  newSectionTitle.value = "";
-}
-
-function saveAddSection(title) {
-  const v = (title || "").trim();
-  if (!v) return;
-
-  emit("add-section-requested", v);
-
-  addingSection.value = false;
-  newSectionTitle.value = "";
-}
 function openCreateInTab() {
   addingTask.value = true;
   addDraft.value = {
@@ -295,6 +343,7 @@ function openCreateInTab() {
   };
   closeAllMenus();
   cancelEdit();
+  cancelSectionEdit();
 }
 
 function closeCreate() {
@@ -321,6 +370,32 @@ function saveCreate() {
   });
 
   closeCreate();
+}
+
+/** add section */
+const addingSection = ref(false);
+const newSectionTitle = ref("");
+
+function openAddSection() {
+  addingSection.value = true;
+  newSectionTitle.value = "";
+  closeAllMenus();
+  cancelEdit();
+  cancelSectionEdit();
+  addingTask.value = false;
+}
+
+function cancelAddSection() {
+  addingSection.value = false;
+  newSectionTitle.value = "";
+}
+
+function saveAddSection(title) {
+  const v = (title || "").trim();
+  if (!v) return;
+  emit("add-section-requested", v);
+  addingSection.value = false;
+  newSectionTitle.value = "";
 }
 
 /** menu */
@@ -356,7 +431,7 @@ function applyMove(sectionId, taskId) {
   closeAllMenus();
 }
 
-/** edit */
+/** edit row */
 const editingKey = ref(null);
 const editDraft = ref({ name: "", description: "", status: "", dueDate: "" });
 
@@ -377,6 +452,7 @@ function startEdit(row) {
   };
   addingTask.value = false;
   closeAllMenus();
+  cancelSectionEdit();
 }
 
 function cancelEdit() {
@@ -403,7 +479,7 @@ function saveEdit(row) {
   cancelEdit();
 }
 
-/** Delete */
+/** Delete task */
 function onDelete(sectionId, taskId) {
   emit("delete", { sectionId, taskId });
   closeAllMenus();
@@ -685,5 +761,99 @@ function onDelete(sectionId, taskId) {
 
 .addSectionEditor {
   min-width: 260px;
+}
+.tab {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.tab-text {
+  display: inline-block;
+}
+
+.tab.active {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.tab-actions {
+  display: inline-flex;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.tab:hover .tab-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tab-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  color: #334155;
+  display: inline-grid;
+  place-items: center;
+}
+
+.tab-icon.danger {
+  color: #ef4444;
+}
+
+.tab-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.tab-input {
+  width: 140px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  outline: none;
+}
+
+.tab-ok {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  color: #16a34a;
+}
+
+.tab-x {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  color: #64748b;
 }
 </style>
