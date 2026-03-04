@@ -1,3 +1,4 @@
+
 <template>
   <div class="page">
     <section class="shell" @click="closeAllMenus">
@@ -5,7 +6,7 @@
       <header class="topbar">
         <div class="top-bar-left">
           <h1 class="title">Task Management</h1>
-                </div>
+        </div>
 
         <!-- Toggle -->
         <div class="view-toggle" @click.stop>
@@ -40,13 +41,13 @@
         <div class="board-row">
           <article v-for="sec in sections" :key="sec.id" class="col">
             <div class="col-header">
-               <!-- Inline edit title -->
+                <!-- Inline edit title -->
               <div class="col-title">
                 <template v-if="editingSectionId === sec.id">
                   <SectionInlineEditor
                     v-model="newSectionTitle"
                     placeholder="Section name"
-                    @save="renameSection(sec.id, $event)"
+                    @save="onRenameSection(sec.id, $event)"
                     @cancel="cancelSectionEdit"
                   />
                 </template>
@@ -69,12 +70,12 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 0 0 0-7.5 0" />
                   </svg>
                 </button>
               </div>
             </div>
-               <!-- TaskList  -->
+              <!-- TaskList  -->
             <TaskList
               :section-id="sec.id"
               :section-title="sec.title"
@@ -93,7 +94,7 @@
               <SectionInlineEditor
                 v-model="newSectionTitle"
                 placeholder="Section name"
-                @save="saveNewSection"
+                @save="onAddSection"
                 @cancel="cancelNewSection"
               />
             </template>
@@ -115,8 +116,8 @@
           @upsert="handleTaskUpsert"
           @delete="handleTaskDelete"
           @move="handleTaskMove"
-          @add-section-requested="saveNewSection"
-          @rename-section-requested="renameSection"
+          @add-section-requested="onAddSection"
+          @rename-section-requested="onRenameSection"
           @delete-section-requested="requestDeleteSection"
         />
       </div>
@@ -126,8 +127,8 @@
         :duration="snack.duration"
         @close="closeSnack"
       />
-
-      <!-- Confirm dialog for BOTH views -->
+      
+<!-- Confirm dialog for BOTH views -->
       <ConfirmDialog
         :open="confirm.open"
         :title="confirm.title"
@@ -141,21 +142,26 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { uniqueId } from "lodash";
+import { storeToRefs } from "pinia";
+import { useTaskStore } from "@/stores/taskStore";
+
 import TaskList from "./TaskList.vue";
 import SectionInlineEditor from "./SectionInlineEditor.vue";
 import TaskTable from "./TaskTable.vue";
 import Snackbar from "./Snackbar.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 
-const sections = ref([
-  { id: 1, title: "Todo", tasks: [] }
-]);
+const taskStore = useTaskStore();
 
-const statusOptions = computed(() => sections.value.map((s) => s.title));
+//  read store data as refs (reactive)
+const { sections, snack } = storeToRefs(taskStore);
+
+//  status options comes from store getter
+const statusOptions = computed(() => taskStore.statusOptions);
+
 
 const viewMode = ref("board");
-
+ 
 /** SECTION MENU */
 const menuOpenFor = ref(null);
 function closeAllMenus() {
@@ -179,15 +185,8 @@ function cancelNewSection() {
   newSectionTitle.value = "";
 }
 
-function saveNewSection(title) {
-  const v = (title || "").trim();
-  if (!v) return;
-
-  sections.value.push({
-    id: uniqueId("section_"),
-    title: v,
-    tasks: [],
-  });
+function onAddSection(title) {
+  taskStore.addSection(title); 
   addingSection.value = false;
   newSectionTitle.value = "";
 }
@@ -207,25 +206,10 @@ function cancelSectionEdit() {
   newSectionTitle.value = "";
 }
 
-/** reusable rename for both board + table */
-function renameSection(sectionId, title) {
-  const v = (title || "").trim();
-  if (!v) return;
-
-  const sec = sections.value.find((s) => s.id === sectionId);
-  if (!sec) return;
-
-  const oldTitle = sec.title;
-  sec.title = v;
-
-  // update tasks status values
-  sec.tasks.forEach((t) => {
-    if (t.status === oldTitle) t.status = v;
-  });
-
+function onRenameSection(sectionId, title) {
+  taskStore.renameSection(sectionId, title);
   editingSectionId.value = null;
   newSectionTitle.value = "";
-  showSnack(`Section updated to "${v}"`, 3000);
 }
 
 /** confirmation state */
@@ -256,97 +240,31 @@ function confirmDelete() {
   const sectionId = confirm.value.sectionId;
   closeConfirm();
   if (!sectionId) return;
-  doDeleteSection(sectionId);
-}
 
-
-function doDeleteSection(sectionId) {
-  const secToDelete = sections.value.find((s) => s.id === sectionId);
-  const deletedTitle = secToDelete?.title;
-
-  sections.value = sections.value.filter((s) => s.id !== sectionId);
+  //  delete in store
+  taskStore.deleteSection(sectionId);
 
   if (editingSectionId.value === sectionId) cancelSectionEdit();
-
-  if (deletedTitle) {
-    const fallback = sections.value[0]?.title || "Todo";
-    sections.value.forEach((s) => {
-      s.tasks.forEach((t) => {
-        if (t.status === deletedTitle) t.status = fallback;
-      });
-    });
-    showSnack(`Section "${deletedTitle}" deleted`, 3000);
-  }
-
   closeAllMenus();
 }
 
-/** TASK HANDLERS */
-function handleTaskUpsert({ fromSectionId, editingTaskId, task }) {
-  // edit existing
-  if (editingTaskId) {
-    const fromSec = sections.value.find((s) => s.id === fromSectionId);
-    if (!fromSec) return;
-
-    const idx = fromSec.tasks.findIndex((t) => t.id === editingTaskId);
-    if (idx === -1) return;
-
-    const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId };
-    const toSec = sections.value.find((s) => s.title === updated.status);
-
-    if (toSec && toSec.id !== fromSec.id) {
-      fromSec.tasks.splice(idx, 1);
-      toSec.tasks.push(updated);
-    } else {
-      fromSec.tasks[idx] = updated;
-    }
-    return;
-  }
-
-  // add new
-  const sec = sections.value.find((s) => s.title === task.status);
-  if (!sec) return;
-  sec.tasks.push(task);
+/** TASK HANDLERS -> call store */
+function handleTaskUpsert(payload) {
+  taskStore.upsertTask(payload);
 }
 
-function handleTaskDelete({ sectionId, taskId }) {
-  const sec = sections.value.find((s) => s.id === sectionId);
-  if (!sec) return;
-
-  const idx = sec.tasks.findIndex((t) => t.id === taskId);
-  if (idx === -1) return;
-
-  sec.tasks.splice(idx, 1);
+function handleTaskDelete(payload) {
+  taskStore.deleteTask(payload);
   closeAllMenus();
 }
 
-function handleTaskMove({ sectionId, taskId, newIndex }) {
-  const sec = sections.value.find((s) => s.id === sectionId);
-  if (!sec) return;
-
-  const fromIndex = sec.tasks.findIndex((t) => t.id === taskId);
-  if (fromIndex === -1) return;
-  if (newIndex === fromIndex) return;
-
-  const [task] = sec.tasks.splice(fromIndex, 1);
-  sec.tasks.splice(newIndex, 0, task);
+function handleTaskMove(payload) {
+  taskStore.moveTask(payload);
 }
 
-/** SNACKBAR */
-const snack = ref({ 
-  open: false, 
-  message: "", 
-  duration: 3000,
-});
-
-function showSnack(message, duration = 5000) {
-  snack.value.open = true;
-  snack.value.message = message;
-  snack.value.duration = duration;
-}
-
+/** SNACKBAR -> store */
 function closeSnack() {
-  snack.value.open = false;
+  taskStore.closeSnack();
 }
 </script>
 
@@ -382,11 +300,6 @@ function closeSnack() {
   color: #111827;
 }
 
-.subtitle {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #6b7280;
-}
 
 .view-toggle {
   display: flex;
