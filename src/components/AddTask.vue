@@ -1,53 +1,71 @@
 <template>
-  <div class="task-form">
-    <div class="task-form-header">
-      <h3 class="task-form-title">{{ isEdit ? "Edit Task" : "Add New Task" }}</h3>
+  <el-card shadow="never">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <h3 style="margin: 0;">
+        {{ isEdit ? "Edit Task" : "Add New Task" }}
+      </h3>
 
-      <button class="close-btn" type="button" @click="cancel">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-          class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-        </svg>
-      </button>
+      <el-button text @click="cancel">
+        <el-icon>
+          <Close />
+        </el-icon>
+      </el-button>
     </div>
 
-    <form class="form" @submit.prevent="submit">
-      <div class="field">
-        <label class="label">Task Name *</label>
-        <input v-model.trim="name" type="text" class="input" placeholder="Enter Your Task" />
-      </div>
+    <el-form label-position="top" @submit.prevent="submit">
+      <el-form-item label="Task Name *">
+        <el-input v-model.trim="name" placeholder="Enter Your Task" />
+      </el-form-item>
 
-      <div class="field">
-        <label class="label">Description</label>
-        <textarea v-model.trim="description" class="input area" placeholder="Description">
-        </textarea>
-      </div>
+      <el-form-item label="Description">
+        <el-input
+          v-model.trim="description"
+          type="textarea"
+          placeholder="Description"
+          :rows="4"
+        />
+      </el-form-item>
 
-      <div class="row">
-        <div class="field">
-          <label class="label">Status</label>
-          <select v-model="status" class="input">
-            <option v-for="opt in statusOptions" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
-        </div>
+      <el-row :gutter="12">
+        <el-col :span="12">
+          <el-form-item label="Status">
+            <el-select v-model="status" placeholder="Select Status" style="width: 100%;">
+              <el-option
+                v-for="opt in statusOptions"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
 
-        <div class="field">
-          <label class="label">Due Date</label>
-          <input v-model="dueDate" type="date" class="input" />
-        </div>
-      </div>
+        <el-col :span="12">
+          <el-form-item label="Due Date">
+            <el-date-picker
+              v-model="dueDate"
+              type="date"
+              placeholder="Pick a date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              style="width: 100%;"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
 
-      <div class="actions">
-        <button class="ghost" type="button" @click="cancel">Cancel</button>
-        <button class="primary" type="submit">{{ isEdit ? "Save" : "Add" }}</button>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <el-button @click="cancel">Cancel</el-button>
+        <el-button type="primary" @click="submit">
+          {{ isEdit ? "Save" : "Add" }}
+        </el-button>
       </div>
-    </form>
-  </div>
+    </el-form>
+  </el-card>
 </template>
 
 <script setup>
+import { Close } from "@element-plus/icons-vue";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps({
@@ -87,8 +105,9 @@ watch(
 watch(
   () => props.defaultStatus,
   (v) => {
-    if (!isEdit.value)
+    if (!isEdit.value) {
       status.value = v || props.statusOptions[0] || "Todo";
+    }
   }
 );
 
@@ -110,106 +129,3 @@ function submit() {
   emit("save", task);
 }
 </script>
-
-<style scoped>
-.task-form {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.task-form-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.task-form-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 900;
-  color: #111827;
-}
-
-.close-btn {
-  width: 25px;
-  height: 25px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  cursor: pointer;
-  font-weight: 900;
-}
-
-.form {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.label {
-  font-size: 12px;
-  font-weight: 800;
-  color: #475569;
-}
-
-.input {
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 8px 12px;
-  outline: none;
-  color: #111827;
-  background: #ffffff;
-}
-
-.input:focus {
-  border-color: #f97316;
-}
-
-.area {
-  min-height: 78px;
-  resize: vertical;
-  padding-top: 10px;
-}
-
-.row {
-  display: flex;
-  gap: 10px;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.primary {
-  border: none;
-  background: #f97316;
-  color: #ffffff;
-  font-weight: 900;
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.ghost {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #0f172a;
-  font-weight: 900;
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-</style>
