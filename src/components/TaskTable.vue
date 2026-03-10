@@ -95,52 +95,70 @@
 
     <!-- Create row -->
     <el-card v-if="addingTask" shadow="never" style="margin-bottom: 16px">
-      <el-row :gutter="12">
-        <el-col :span="5">
-          <el-input
-            v-model.trim="addDraft.name"
-            placeholder="Task name *"
-            @keydown.enter.prevent="saveCreate"
-          />
-        </el-col>
+      <el-form
+        ref="createFormRef"
+        :model="addDraft"
+        :rules="taskRules"
+        label-position="top"
+        @submit.prevent="saveCreate"
+      >
+        <el-row :gutter="12">
+          <el-col :span="5">
+            <el-form-item prop="name" label="Task name">
+              <el-input
+                v-model.trim="addDraft.name"
+                placeholder="Task name *"
+                @keydown.enter.prevent="saveCreate"
+              />
+            </el-form-item>
+          </el-col>
 
-        <el-col :span="7">
-          <el-input
-            v-model.trim="addDraft.description"
-            placeholder="Description"
-            @keydown.enter.prevent="saveCreate"
-          />
-        </el-col>
+          <el-col :span="7">
+            <el-form-item label="Description">
+              <el-input
+                v-model.trim="addDraft.description"
+                placeholder="Description"
+                @keydown.enter.prevent="saveCreate"
+              />
+            </el-form-item>
+          </el-col>
 
-        <el-col :span="4">
-          <el-select v-model="addDraft.status" style="width: 100%">
-            <el-option
-              v-for="opt in statusOptions"
-              :key="opt"
-              :label="opt"
-              :value="opt"
-            />
-          </el-select>
-        </el-col>
+          <el-col :span="4">
+            <el-form-item label="Status">
+              <el-select v-model="addDraft.status" style="width: 100%">
+                <el-option
+                  v-for="opt in statusOptions"
+                  :key="opt"
+                  :label="opt"
+                  :value="opt"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-        <el-col :span="4">
-          <el-date-picker
-            v-model="addDraft.dueDate"
-            type="date"
-            value-format="YYYY-MM-DD"
-            format="YYYY-MM-DD"
-            placeholder="Due date"
-            style="width: 100%"
-          />
-        </el-col>
+          <el-col :span="4">
+            <el-form-item prop="dueDate" label="Due date">
+              <el-date-picker
+                v-model="addDraft.dueDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                placeholder="Due date"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
 
-        <el-col :span="4">
-          <el-space>
-            <el-button type="primary" @click="saveCreate">Add</el-button>
-            <el-button @click="closeCreate">Cancel</el-button>
-          </el-space>
-        </el-col>
-      </el-row>
+          <el-col :span="4">
+            <el-form-item label=" ">
+              <el-space>
+                <el-button type="primary" @click="saveCreate">Add</el-button>
+                <el-button @click="closeCreate">Cancel</el-button>
+              </el-space>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
     </el-card>
 
     <!-- Table -->
@@ -154,7 +172,17 @@
         <el-table-column label="Task name" min-width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-input v-model.trim="editDraft.name" />
+              <el-form
+                ref="editFormRef"
+                :model="editDraft"
+                :rules="taskRules"
+                label-position="top"
+                @submit.prevent="saveEdit(row)"
+              >
+                <el-form-item prop="name" style="margin-bottom: 0">
+                  <el-input v-model.trim="editDraft.name" />
+                </el-form-item>
+              </el-form>
             </template>
             <template v-else>
               <strong>{{ row.task.name }}</strong>
@@ -197,14 +225,22 @@
         <el-table-column label="Due date" width="160">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-date-picker
-                v-model="editDraft.dueDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                format="YYYY-MM-DD"
-                placeholder="Due date"
-                style="width: 100%"
-              />
+              <el-form
+                :model="editDraft"
+                :rules="taskRules"
+                label-position="top"
+              >
+                <el-form-item prop="dueDate" style="margin-bottom: 0">
+                  <el-date-picker
+                    v-model="editDraft.dueDate"
+                    type="date"
+                    value-format="YYYY-MM-DD"
+                    format="YYYY-MM-DD"
+                    placeholder="Due date"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-form>
             </template>
             <template v-else>
               {{ row.task.dueDate || "-" }}
@@ -333,6 +369,27 @@ watch(activeSectionId, () => {
   cancelSectionEdit();
 });
 
+
+const createFormRef = ref(null);
+const editFormRef = ref(null);
+
+const taskRules = {
+  name: [
+    {
+      required: true,
+      message: "Please enter task name",
+      trigger: "blur",
+    },
+  ],
+  dueDate: [
+    {
+      required: true,
+      message: "Please select due date",
+      trigger: "change",
+    },
+  ],
+};
+
 /** section edit in tab */
 const editingSectionId = ref(null);
 const editSectionTitle = ref("");
@@ -376,32 +433,38 @@ function openCreateInTab() {
   closeAllMenus();
   cancelEdit();
   cancelSectionEdit();
+
+  setTimeout(() => {
+    createFormRef.value?.clearValidate?.();
+  });
 }
 
 function closeCreate() {
   addingTask.value = false;
   addDraft.value = { name: "", description: "", status: "", dueDate: "" };
+  createFormRef.value?.clearValidate?.();
 }
 
 function saveCreate() {
-  const name = (addDraft.value.name || "").trim();
-  if (!name) return;
+  createFormRef.value?.validate((valid) => {
+    if (!valid) return;
 
-  const task = {
-    id: Date.now(),
-    name,
-    description: (addDraft.value.description || "").trim(),
-    status: addDraft.value.status || activeSectionTitle.value,
-    dueDate: addDraft.value.dueDate || null,
-  };
+    const task = {
+      id: Date.now(),
+      name: (addDraft.value.name || "").trim(),
+      description: (addDraft.value.description || "").trim(),
+      status: addDraft.value.status || activeSectionTitle.value,
+      dueDate: addDraft.value.dueDate || null,
+    };
 
-  emit("upsert", {
-    fromSectionId: activeSectionId.value,
-    editingTaskId: null,
-    task,
+    emit("upsert", {
+      fromSectionId: activeSectionId.value,
+      editingTaskId: null,
+      task,
+    });
+
+    closeCreate();
   });
-
-  closeCreate();
 }
 
 /** add section */
@@ -485,30 +548,36 @@ function startEdit(row) {
   addingTask.value = false;
   closeAllMenus();
   cancelSectionEdit();
+
+  setTimeout(() => {
+    editFormRef.value?.clearValidate?.();
+  });
 }
 
 function cancelEdit() {
   editingKey.value = null;
   editDraft.value = { name: "", description: "", status: "", dueDate: "" };
+  editFormRef.value?.clearValidate?.();
 }
 
 function saveEdit(row) {
-  const name = (editDraft.value.name || "").trim();
-  if (!name) return;
+  editFormRef.value?.validate((valid) => {
+    if (!valid) return;
 
-  emit("upsert", {
-    fromSectionId: row.sectionId,
-    editingTaskId: row.task.id,
-    task: {
-      ...row.task,
-      name,
-      description: (editDraft.value.description || "").trim(),
-      status: editDraft.value.status,
-      dueDate: editDraft.value.dueDate || null,
-    },
+    emit("upsert", {
+      fromSectionId: row.sectionId,
+      editingTaskId: row.task.id,
+      task: {
+        ...row.task,
+        name: (editDraft.value.name || "").trim(),
+        description: (editDraft.value.description || "").trim(),
+        status: editDraft.value.status,
+        dueDate: editDraft.value.dueDate || null,
+      },
+    });
+
+    cancelEdit();
   });
-
-  cancelEdit();
 }
 
 /** Delete task */

@@ -12,14 +12,20 @@
       </el-button>
     </div>
 
-    <el-form label-position="top" @submit.prevent="submit">
-      <el-form-item label="Task Name *">
-        <el-input v-model.trim="name" placeholder="Enter Your Task" />
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-position="top"
+      @submit.prevent="submit"
+    >
+      <el-form-item label="Task Name" prop="name">
+        <el-input v-model.trim="form.name" placeholder="Enter Your Task" />
       </el-form-item>
 
       <el-form-item label="Description">
         <el-input
-          v-model.trim="description"
+          v-model.trim="form.description"
           type="textarea"
           placeholder="Description"
           :rows="4"
@@ -29,7 +35,11 @@
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="Status">
-            <el-select v-model="status" placeholder="Select Status" style="width: 100%;">
+            <el-select
+              v-model="form.status"
+              placeholder="Select Status"
+              style="width: 100%;"
+            >
               <el-option
                 v-for="opt in statusOptions"
                 :key="opt"
@@ -41,9 +51,9 @@
         </el-col>
 
         <el-col :span="12">
-          <el-form-item label="Due Date">
+          <el-form-item label="Due Date" prop="dueDate">
             <el-date-picker
-              v-model="dueDate"
+              v-model="form.dueDate"
               type="date"
               placeholder="Pick a date"
               value-format="YYYY-MM-DD"
@@ -66,7 +76,7 @@
 
 <script setup>
 import { Close } from "@element-plus/icons-vue";
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 
 const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
@@ -76,28 +86,56 @@ const props = defineProps({
 
 const emit = defineEmits(["cancel", "save"]);
 
+const formRef = ref();
+
 const isEdit = computed(() => !!props.initialTask);
 
-const name = ref("");
-const description = ref("");
-const status = ref(props.defaultStatus || props.statusOptions[0] || "Todo");
-const dueDate = ref("");
+const form = reactive({
+  name: "",
+  description: "",
+  status: props.defaultStatus || props.statusOptions[0] || "Todo",
+  dueDate: "",
+});
+
+const rules = {
+  name: [
+    {
+      required: true,
+      message: "Please enter task name",
+      trigger: "blur",
+    },
+    {
+      min: 1,
+      message: "Task name cannot be empty",
+      trigger: "blur",
+    },
+  ],
+  dueDate: [
+    {
+      required: true,
+      message: "Please select due date",
+      trigger: "change",
+    },
+  ],
+};
 
 watch(
   () => props.initialTask,
   (t) => {
     if (t) {
-      name.value = t.name ?? "";
-      description.value = t.description ?? "";
-      status.value =
+      form.name = t.name ?? "";
+      form.description = t.description ?? "";
+      form.status =
         t.status ?? (props.defaultStatus || props.statusOptions[0] || "Todo");
-      dueDate.value = t.dueDate ?? "";
+      form.dueDate = t.dueDate ?? "";
     } else {
-      name.value = "";
-      description.value = "";
-      status.value = props.defaultStatus || props.statusOptions[0] || "Todo";
-      dueDate.value = "";
+      form.name = "";
+      form.description = "";
+      form.status = props.defaultStatus || props.statusOptions[0] || "Todo";
+      form.dueDate = "";
     }
+
+    formRef.value?.clearValidate();
   },
   { immediate: true }
 );
@@ -106,7 +144,7 @@ watch(
   () => props.defaultStatus,
   (v) => {
     if (!isEdit.value) {
-      status.value = v || props.statusOptions[0] || "Todo";
+      form.status = v || props.statusOptions[0] || "Todo";
     }
   }
 );
@@ -116,16 +154,18 @@ function cancel() {
 }
 
 function submit() {
-  if (!name.value.trim()) return;
+  formRef.value.validate((valid) => {
+    if (!valid) return;
 
-  const task = {
-    id: props.initialTask?.id ?? Date.now(),
-    name: name.value.trim(),
-    description: description.value.trim(),
-    status: status.value,
-    dueDate: dueDate.value || null,
-  };
+    const task = {
+      id: props.initialTask?.id ?? Date.now(),
+      name: form.name.trim(),
+      description: form.description.trim(),
+      status: form.status,
+      dueDate: form.dueDate || null,
+    };
 
-  emit("save", task);
+    emit("save", task);
+  });
 }
 </script>
