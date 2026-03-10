@@ -8,7 +8,9 @@
     </div>
 
     <!-- Tabs -->
-    <div @click.stop style="margin-bottom: 16px">
+   <div @click.stop style="margin-bottom: 16px;
+    display: flex;flex-direction: row;
+    gap:30px;">
       <el-tabs v-model="activeSectionId" type="card">
         <el-tab-pane
           v-for="sec in sections"
@@ -73,9 +75,13 @@
         </el-tab-pane>
       </el-tabs>
 
-      <div style="margin-top: 12px">
-        <template v-if="!addingSection">
-          <el-button plain @click="openAddSection">
+      <div>
+       <template v-if="!addingSection" style="flex: 0 0 220px;">
+          <el-button plain @click="openAddSection" 
+          style="width:200px; 
+          height: 38px;
+          border: 2px dashed #cbd5e1;
+          font-weight: 800;">
             + Add Section
           </el-button>
         </template>
