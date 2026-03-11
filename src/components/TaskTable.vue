@@ -324,6 +324,7 @@ import {
   MoreFilled,
 } from "@element-plus/icons-vue";
 import SectionInlineEditor from "./SectionInlineEditor.vue";
+import { ElMessageBox } from "element-plus";
 
 const props = defineProps({
   sections: { type: Array, default: () => [] },
@@ -587,10 +588,29 @@ function saveEdit(row) {
 }
 
 /** Delete task */
-function onDelete(sectionId, taskId) {
-  emit("delete", { sectionId, taskId });
-  closeAllMenus();
-  cancelEdit();
+async function onDelete(sectionId, taskId) {
+  const row = activeRows.value.find(
+    (r) => r.sectionId === sectionId && r.task.id === taskId
+  );
+  if (!row) return;
+
+  try {
+    await ElMessageBox.confirm(
+      `Are you sure you want to delete the task "${row.task.name}"?`,
+      "Delete Task",
+      {
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      }
+    );
+
+    emit("delete", { sectionId, taskId });
+    closeAllMenus();
+    cancelEdit();
+  } catch {
+    // user cancelled
+  }
 }
 
 function handleRowCommand(command, row) {

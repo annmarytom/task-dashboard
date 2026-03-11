@@ -112,6 +112,7 @@
 import { ref } from "vue";
 import { Delete, Edit, Rank } from "@element-plus/icons-vue";
 import AddTask from "./AddTask.vue";
+import { ElMessageBox } from "element-plus";
 
 const props = defineProps({
   sectionId: { type: [String, Number], required: true },
@@ -152,9 +153,26 @@ function onSaveTask(task) {
   closeForms();
 }
 
-function onDelete(taskId) {
-  emit("delete", { sectionId: props.sectionId, taskId });
-  closeMove();
+async function onDelete(taskId) {
+  const task = props.tasks.find((t) => t.id === taskId);
+  if (!task) return;
+
+  try {
+    await ElMessageBox.confirm(
+      `Are you sure you want to delete the task "${task.name}"?`,
+      "Delete Task",
+      {
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+        type: "warning",
+      }
+    );
+
+    emit("delete", { sectionId: props.sectionId, taskId });
+    closeMove();
+  } catch {
+    // user cancelled
+  }
 }
 
 /** move popup */
