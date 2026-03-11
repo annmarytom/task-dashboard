@@ -8,36 +8,25 @@
     </div>
 
     <!-- Tabs -->
-   <div @click.stop style="margin-bottom: 16px;
-    display: flex;flex-direction: row;
-    gap:30px;">
+    <div @click.stop style="margin-bottom: 16px; display: flex; flex-direction: row; gap: 30px;">
       <el-tabs v-model="activeSectionId" type="card">
-        <el-tab-pane
-          v-for="sec in sections"
-          :key="sec.id"
-          :name="sec.id"
-        >
+        <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id">
           <template #label>
             <template v-if="editingSectionId !== sec.id">
               <el-space>
                 <span>{{ sec.title }} ({{ (sec.tasks || []).length }})</span>
 
                 <span @click.stop>
-                  <el-button
-                    size="small"
-                    circle
-                    @click.stop="startEditSection(sec)"
-                  >
-                    <el-icon><Edit /></el-icon>
+                  <el-button size="small" circle @click.stop="startEditSection(sec)">
+                    <el-icon>
+                      <Edit />
+                    </el-icon>
                   </el-button>
 
-                  <el-button
-                    size="small"
-                    type="danger"
-                    circle
-                    @click.stop="requestDeleteSection(sec)"
-                  >
-                    <el-icon><Delete /></el-icon>
+                  <el-button size="small" type="danger" circle @click.stop="requestDeleteSection(sec)">
+                    <el-icon>
+                      <Delete />
+                    </el-icon>
                   </el-button>
                 </span>
               </el-space>
@@ -45,29 +34,23 @@
 
             <template v-else>
               <el-space @click.stop>
-                <el-input
-                  v-model.trim="editSectionTitle"
-                  size="small"
-                  style="width: 140px"
-                  @keydown.enter.prevent="saveSectionEdit(sec.id)"
-                  @keydown.esc.prevent="cancelSectionEdit"
-                />
+                <el-form :ref="setSectionEditFormRef" :model="sectionEditForm" :rules="sectionRules" @submit.prevent>
+                  <el-form-item prop="title" style="margin-bottom: 0">
+                    <el-input v-model.trim="sectionEditForm.title" size="small" style="width: 140px"
+                      @keydown.enter.prevent="saveSectionEdit(sec.id)" @keydown.esc.prevent="cancelSectionEdit" />
+                  </el-form-item>
+                </el-form>
 
-                <el-button
-                  size="small"
-                  type="success"
-                  circle
-                  @click.stop="saveSectionEdit(sec.id)"
-                >
-                  <el-icon><Check /></el-icon>
+                <el-button size="small" type="success" circle @click.stop="saveSectionEdit(sec.id)">
+                  <el-icon>
+                    <Check />
+                  </el-icon>
                 </el-button>
 
-                <el-button
-                  size="small"
-                  circle
-                  @click.stop="cancelSectionEdit"
-                >
-                  <el-icon><Close /></el-icon>
+                <el-button size="small" circle @click.stop="cancelSectionEdit">
+                  <el-icon>
+                    <Close />
+                  </el-icon>
                 </el-button>
               </el-space>
             </template>
@@ -76,82 +59,73 @@
       </el-tabs>
 
       <div>
-       <template v-if="!addingSection" style="flex: 0 0 220px;">
-          <el-button plain @click="openAddSection" 
-          style="width:200px; 
-          height: 38px;
-          border: 2px dashed #cbd5e1;
-          font-weight: 800;">
+        <template v-if="!addingSection">
+          <el-button plain @click="openAddSection" style="
+              width: 200px;
+              height: 38px;
+              border: 2px dashed #cbd5e1;
+              font-weight: 800;
+            ">
             + Add Section
           </el-button>
         </template>
 
         <template v-else>
-          <div style="max-width: 320px">
-            <SectionInlineEditor
-              v-model="newSectionTitle"
-              placeholder="Section name"
-              @save="saveAddSection"
-              @cancel="cancelAddSection"
-            />
-          </div>
+          <el-space @click.stop>
+            <el-form ref="sectionAddFormRef" :model="sectionAddForm" :rules="sectionRules" @submit.prevent>
+              <el-form-item prop="title" style="margin-bottom: 0">
+                <el-input v-model.trim="sectionAddForm.title" size="small" style="width: 160px"
+                  placeholder="Section name" @keydown.enter.prevent="saveAddSection"
+                  @keydown.esc.prevent="cancelAddSection" />
+              </el-form-item>
+            </el-form>
+
+            <el-button size="small" type="success" circle @click.stop="saveAddSection">
+              <el-icon>
+                <Check />
+              </el-icon>
+            </el-button>
+
+            <el-button size="small" circle @click.stop="cancelAddSection">
+              <el-icon>
+                <Close />
+              </el-icon>
+            </el-button>
+          </el-space>
         </template>
       </div>
     </div>
 
     <!-- Create row -->
     <el-card v-if="addingTask" shadow="never" style="margin-bottom: 16px">
-      <el-form
-        ref="createFormRef"
-        :model="addDraft"
-        :rules="taskRules"
-        label-position="top"
-        @submit.prevent="saveCreate"
-      >
+      <el-form ref="createFormRef" :model="addDraft" :rules="taskRules" label-position="top"
+        @submit.prevent="saveCreate">
         <el-row :gutter="12">
           <el-col :span="5">
             <el-form-item prop="name" label="Task name">
-              <el-input
-                v-model.trim="addDraft.name"
-                placeholder="Task name *"
-                @keydown.enter.prevent="saveCreate"
-              />
+              <el-input v-model.trim="addDraft.name" placeholder="Task name *" @keydown.enter.prevent="saveCreate" />
             </el-form-item>
           </el-col>
 
           <el-col :span="7">
             <el-form-item label="Description">
-              <el-input
-                v-model.trim="addDraft.description"
-                placeholder="Description"
-                @keydown.enter.prevent="saveCreate"
-              />
+              <el-input v-model.trim="addDraft.description" placeholder="Description"
+                @keydown.enter.prevent="saveCreate" />
             </el-form-item>
           </el-col>
 
           <el-col :span="4">
             <el-form-item label="Status">
               <el-select v-model="addDraft.status" style="width: 100%">
-                <el-option
-                  v-for="opt in statusOptions"
-                  :key="opt"
-                  :label="opt"
-                  :value="opt"
-                />
+                <el-option v-for="opt in statusOptions" :key="opt" :label="opt" :value="opt" />
               </el-select>
             </el-form-item>
           </el-col>
 
           <el-col :span="4">
             <el-form-item prop="dueDate" label="Due date">
-              <el-date-picker
-                v-model="addDraft.dueDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                format="YYYY-MM-DD"
-                placeholder="Due date"
-                style="width: 100%"
-              />
+              <el-date-picker v-model="addDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+                placeholder="Due date" style="width: 100%" />
             </el-form-item>
           </el-col>
 
@@ -167,28 +141,22 @@
       </el-form>
     </el-card>
 
+    <el-form ref="editTaskFormRef" :model="editDraft" :rules="taskRules" label-position="top" style="display: none">
+      <el-form-item prop="name" />
+      <el-form-item prop="dueDate" />
+    </el-form>
+
     <!-- Table -->
     <div @click.stop>
-      <el-table
-        :data="activeRows"
-        style="width: 100%"
-        height="520"
-        empty-text="No tasks yet."
-      >
+      <el-table :data="activeRows" style="width: 100%" height="520" empty-text="No tasks yet.">
         <el-table-column label="Task name" min-width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-form
-                ref="editFormRef"
-                :model="editDraft"
-                :rules="taskRules"
-                label-position="top"
-                @submit.prevent="saveEdit(row)"
-              >
-                <el-form-item prop="name" style="margin-bottom: 0">
-                  <el-input v-model.trim="editDraft.name" />
-                </el-form-item>
-              </el-form>
+              <el-input v-model.trim="editDraft.name" placeholder="Task name" @keydown.enter.prevent="saveEdit(row)"
+                @keydown.esc.prevent="cancelEdit" />
+              <div v-if="editTaskErrors.name" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
+                {{ editTaskErrors.name }}
+              </div>
             </template>
             <template v-else>
               <strong>{{ row.task.name }}</strong>
@@ -199,10 +167,7 @@
         <el-table-column label="Description" min-width="220">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-input
-                v-model.trim="editDraft.description"
-                placeholder="-"
-              />
+              <el-input v-model.trim="editDraft.description" placeholder="-" />
             </template>
             <template v-else>
               {{ row.task.description || "-" }}
@@ -214,12 +179,7 @@
           <template #default="{ row }">
             <template v-if="isEditing(row)">
               <el-select v-model="editDraft.status" style="width: 100%">
-                <el-option
-                  v-for="opt in statusOptions"
-                  :key="opt"
-                  :label="opt"
-                  :value="opt"
-                />
+                <el-option v-for="opt in statusOptions" :key="opt" :label="opt" :value="opt" />
               </el-select>
             </template>
             <template v-else>
@@ -231,22 +191,11 @@
         <el-table-column label="Due date" width="160">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-form
-                :model="editDraft"
-                :rules="taskRules"
-                label-position="top"
-              >
-                <el-form-item prop="dueDate" style="margin-bottom: 0">
-                  <el-date-picker
-                    v-model="editDraft.dueDate"
-                    type="date"
-                    value-format="YYYY-MM-DD"
-                    format="YYYY-MM-DD"
-                    placeholder="Due date"
-                    style="width: 100%"
-                  />
-                </el-form-item>
-              </el-form>
+              <el-date-picker v-model="editDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+                placeholder="Due date" style="width: 100%" />
+              <div v-if="editTaskErrors.dueDate" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
+                {{ editTaskErrors.dueDate }}
+              </div>
             </template>
             <template v-else>
               {{ row.task.dueDate || "-" }}
@@ -266,13 +215,17 @@
             <template v-else>
               <el-dropdown trigger="click" @command="(cmd) => handleRowCommand(cmd, row)">
                 <el-button circle @click.stop>
-                  <el-icon><MoreFilled /></el-icon>
+                  <el-icon>
+                    <MoreFilled />
+                  </el-icon>
                 </el-button>
 
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">Edit</el-dropdown-item>
-                    <el-dropdown-item command="interchange">Interchange</el-dropdown-item>
+                    <el-dropdown-item command="interchange">
+                      Interchange
+                    </el-dropdown-item>
                     <el-dropdown-item command="delete" divided>
                       Delete
                     </el-dropdown-item>
@@ -280,22 +233,13 @@
                 </template>
               </el-dropdown>
 
-              <el-card
-                v-if="moveOpenFor === row.task.id"
-                shadow="never"
-                style="margin-top: 8px"
-                @click.stop
-              >
+              <el-card v-if="moveOpenFor === row.task.id" shadow="never" style="margin-top: 8px" @click.stop>
                 <el-space direction="vertical" fill>
                   <div><strong>Move position to:</strong></div>
 
                   <el-space>
-                    <el-input-number
-                      v-model="moveTo"
-                      :min="1"
-                      :max="activeRows.length"
-                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
-                    />
+                    <el-input-number v-model="moveTo" :min="1" :max="activeRows.length"
+                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)" />
                     <el-button @click="applyMove(row.sectionId, row.task.id)">
                       Move
                     </el-button>
@@ -315,7 +259,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import {
   Edit,
   Delete,
@@ -323,7 +267,6 @@ import {
   Close,
   MoreFilled,
 } from "@element-plus/icons-vue";
-import SectionInlineEditor from "./SectionInlineEditor.vue";
 import { ElMessageBox } from "element-plus";
 
 const props = defineProps({
@@ -345,7 +288,7 @@ const activeSectionId = ref(null);
 watch(
   () => props.sections,
   (secs) => {
-    if (!activeSectionId.value && secs?.length) activeSectionId.value = secs[0].id;
+    if (!activeSectionId.value && secs?.length) { activeSectionId.value = secs[0].id; }
 
     if (
       activeSectionId.value &&
@@ -360,6 +303,7 @@ watch(
 const activeSection = computed(() =>
   props.sections.find((s) => s.id === activeSectionId.value)
 );
+
 const activeSectionTitle = computed(() => activeSection.value?.title || "Todo");
 
 const activeRows = computed(() => {
@@ -376,15 +320,28 @@ watch(activeSectionId, () => {
   cancelSectionEdit();
 });
 
-
 const createFormRef = ref(null);
-const editFormRef = ref(null);
+const editTaskFormRef = ref(null);
+const sectionEditFormRef = ref(null);
+
+function setSectionEditFormRef(el) {
+  if (el) {
+    sectionEditFormRef.value = el;
+  }
+}
+
+const sectionAddFormRef = ref(null);
 
 const taskRules = {
   name: [
     {
       required: true,
       message: "Please enter task name",
+      trigger: "blur",
+    },
+    {
+      min: 1,
+      message: "Task name cannot be empty",
       trigger: "blur",
     },
   ],
@@ -397,28 +354,52 @@ const taskRules = {
   ],
 };
 
+const sectionRules = {
+  title: [
+    {
+      required: true,
+      message: "Please enter section name",
+      trigger: "blur",
+    },
+    {
+      min: 2,
+      message: "Section name must be at least 2 characters",
+      trigger: "blur",
+    },
+  ],
+};
+
 /** section edit in tab */
 const editingSectionId = ref(null);
-const editSectionTitle = ref("");
+const sectionEditForm = reactive({
+  title: "",
+});
 
 function startEditSection(sec) {
   editingSectionId.value = sec.id;
-  editSectionTitle.value = sec.title;
+  sectionEditForm.title = sec.title;
   closeAllMenus();
   cancelEdit();
   addingTask.value = false;
+
+  setTimeout(() => {
+    sectionEditFormRef.value?.clearValidate?.();
+  });
 }
 
 function cancelSectionEdit() {
   editingSectionId.value = null;
-  editSectionTitle.value = "";
+  sectionEditForm.title = "";
+  sectionEditFormRef.value?.clearValidate?.();
 }
 
 function saveSectionEdit(sectionId) {
-  const v = (editSectionTitle.value || "").trim();
-  if (!v) return;
-  emit("rename-section-requested", sectionId, v);
-  cancelSectionEdit();
+  sectionEditFormRef.value?.validate((valid) => {
+    if (!valid) return;
+
+    emit("rename-section-requested", sectionId, sectionEditForm.title.trim());
+    cancelSectionEdit();
+  });
 }
 
 function requestDeleteSection(sec) {
@@ -427,7 +408,12 @@ function requestDeleteSection(sec) {
 
 /** create */
 const addingTask = ref(false);
-const addDraft = ref({ name: "", description: "", status: "", dueDate: "" });
+const addDraft = ref({
+  name: "",
+  description: "",
+  status: "",
+  dueDate: "",
+});
 
 function openCreateInTab() {
   addingTask.value = true;
@@ -476,36 +462,41 @@ function saveCreate() {
 
 /** add section */
 const addingSection = ref(false);
-const newSectionTitle = ref("");
+const sectionAddForm = reactive({
+  title: "",
+});
 
 function openAddSection() {
   addingSection.value = true;
-  newSectionTitle.value = "";
+  sectionAddForm.title = "";
   closeAllMenus();
   cancelEdit();
   cancelSectionEdit();
   addingTask.value = false;
+
+  setTimeout(() => {
+    sectionAddFormRef.value?.clearValidate?.();
+  });
 }
 
 function cancelAddSection() {
   addingSection.value = false;
-  newSectionTitle.value = "";
+  sectionAddForm.title = "";
+  sectionAddFormRef.value?.clearValidate?.();
 }
 
-function saveAddSection(title) {
-  const v = (title || "").trim();
-  if (!v) return;
-  emit("add-section-requested", v);
-  addingSection.value = false;
-  newSectionTitle.value = "";
+function saveAddSection() {
+  sectionAddFormRef.value?.validate((valid) => {
+    if (!valid) return;
+
+    emit("add-section-requested", sectionAddForm.title.trim());
+    cancelAddSection();
+  });
 }
 
 /** menu */
 const menuOpenFor = ref(null);
-function toggleMenu(taskId) {
-  menuOpenFor.value = menuOpenFor.value === taskId ? null : taskId;
-  if (menuOpenFor.value !== taskId) closeMove();
-}
+
 function closeAllMenus() {
   menuOpenFor.value = null;
   closeMove();
@@ -516,7 +507,9 @@ const moveOpenFor = ref(null);
 const moveTo = ref(1);
 
 function toggleInterchange(taskId) {
-  if (moveOpenFor.value === taskId) return closeMove();
+  if (moveOpenFor.value === taskId) {
+    return closeMove();
+  }
   moveOpenFor.value = taskId;
   moveTo.value = 1;
 }
@@ -529,46 +522,79 @@ function closeMove() {
 function applyMove(sectionId, taskId) {
   const newIndex = (moveTo.value || 1) - 1;
   if (newIndex < 0 || newIndex >= activeRows.value.length) return;
+
   emit("move", { sectionId, taskId, newIndex });
   closeAllMenus();
 }
 
 /** edit row */
 const editingKey = ref(null);
-const editDraft = ref({ name: "", description: "", status: "", dueDate: "" });
+const editDraft = reactive({
+  name: "",
+  description: "",
+  status: "",
+  dueDate: "",
+});
+
+const editTaskErrors = reactive({
+  name: "",
+  dueDate: "",
+});
 
 function keyOf(row) {
   return `${row.sectionId}:${row.task.id}`;
 }
+
 function isEditing(row) {
   return editingKey.value === keyOf(row);
 }
 
+function clearEditTaskErrors() {
+  editTaskErrors.name = "";
+  editTaskErrors.dueDate = "";
+}
+
+function syncEditTaskErrors() {
+  const fields = editTaskFormRef.value?.fields || [];
+
+  const nameField = fields.find((f) => f.prop === "name");
+  const dueDateField = fields.find((f) => f.prop === "dueDate");
+
+  editTaskErrors.name = nameField?.validateMessage || "";
+  editTaskErrors.dueDate = dueDateField?.validateMessage || "";
+}
+
 function startEdit(row) {
   editingKey.value = keyOf(row);
-  editDraft.value = {
-    name: row.task.name ?? "",
-    description: row.task.description ?? "",
-    status: row.task.status ?? activeSectionTitle.value,
-    dueDate: row.task.dueDate ?? "",
-  };
+  editDraft.name = row.task.name ?? "";
+  editDraft.description = row.task.description ?? "";
+  editDraft.status = row.task.status ?? activeSectionTitle.value;
+  editDraft.dueDate = row.task.dueDate ?? "";
+
   addingTask.value = false;
   closeAllMenus();
   cancelSectionEdit();
+  clearEditTaskErrors();
 
   setTimeout(() => {
-    editFormRef.value?.clearValidate?.();
+    editTaskFormRef.value?.clearValidate?.();
   });
 }
 
 function cancelEdit() {
   editingKey.value = null;
-  editDraft.value = { name: "", description: "", status: "", dueDate: "" };
-  editFormRef.value?.clearValidate?.();
+  editDraft.name = "";
+  editDraft.description = "";
+  editDraft.status = "";
+  editDraft.dueDate = "";
+  clearEditTaskErrors();
+  editTaskFormRef.value?.clearValidate?.();
 }
 
 function saveEdit(row) {
-  editFormRef.value?.validate((valid) => {
+  editTaskFormRef.value?.validate((valid) => {
+    syncEditTaskErrors();
+
     if (!valid) return;
 
     emit("upsert", {
@@ -576,10 +602,10 @@ function saveEdit(row) {
       editingTaskId: row.task.id,
       task: {
         ...row.task,
-        name: (editDraft.value.name || "").trim(),
-        description: (editDraft.value.description || "").trim(),
-        status: editDraft.value.status,
-        dueDate: editDraft.value.dueDate || null,
+        name: editDraft.name.trim(),
+        description: (editDraft.description || "").trim(),
+        status: editDraft.status,
+        dueDate: editDraft.dueDate || null,
       },
     });
 
