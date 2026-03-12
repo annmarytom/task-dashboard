@@ -8,7 +8,10 @@
     </div>
 
     <!-- Tabs -->
-    <div @click.stop style="margin-bottom: 16px; display: flex; flex-direction: row; gap: 30px;">
+    <div
+      @click.stop
+      style="margin-bottom: 16px; display: flex; flex-direction: row; gap: 30px;"
+    >
       <el-tabs v-model="activeSectionId" type="card">
         <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id">
           <template #label>
@@ -23,7 +26,12 @@
                     </el-icon>
                   </el-button>
 
-                  <el-button size="small" type="danger" circle @click.stop="requestDeleteSection(sec)">
+                  <el-button
+                    size="small"
+                    type="danger"
+                    circle
+                    @click.stop="requestDeleteSection(sec)"
+                  >
                     <el-icon>
                       <Delete />
                     </el-icon>
@@ -34,14 +42,29 @@
 
             <template v-else>
               <el-space @click.stop>
-                <el-form :ref="setSectionEditFormRef" :model="sectionEditForm" :rules="sectionRules" @submit.prevent>
+                <el-form
+                  :ref="setSectionEditFormRef"
+                  :model="sectionEditForm"
+                  :rules="sectionRules"
+                  @submit.prevent
+                >
                   <el-form-item prop="title" style="margin-bottom: 0">
-                    <el-input v-model.trim="sectionEditForm.title" size="small" style="width: 140px"
-                      @keydown.enter.prevent="saveSectionEdit(sec.id)" @keydown.esc.prevent="cancelSectionEdit" />
+                    <el-input
+                      v-model.trim="sectionEditForm.title"
+                      size="small"
+                      style="width: 140px"
+                      @keydown.enter.prevent="saveSectionEdit(sec.id)"
+                      @keydown.esc.prevent="cancelSectionEdit"
+                    />
                   </el-form-item>
                 </el-form>
 
-                <el-button size="small" type="success" circle @click.stop="saveSectionEdit(sec.id)">
+                <el-button
+                  size="small"
+                  type="success"
+                  circle
+                  @click.stop="saveSectionEdit(sec.id)"
+                >
                   <el-icon>
                     <Check />
                   </el-icon>
@@ -60,23 +83,37 @@
 
       <div>
         <template v-if="!addingSection">
-          <el-button plain @click="openAddSection" style="
+          <el-button
+            plain
+            @click="openAddSection"
+            style="
               width: 200px;
               height: 38px;
               border: 2px dashed #cbd5e1;
               font-weight: 800;
-            ">
+            "
+          >
             + Add Section
           </el-button>
         </template>
 
         <template v-else>
           <el-space @click.stop>
-            <el-form ref="sectionAddFormRef" :model="sectionAddForm" :rules="sectionRules" @submit.prevent>
+            <el-form
+              ref="sectionAddFormRef"
+              :model="sectionAddForm"
+              :rules="sectionRules"
+              @submit.prevent
+            >
               <el-form-item prop="title" style="margin-bottom: 0">
-                <el-input v-model.trim="sectionAddForm.title" size="small" style="width: 160px"
-                  placeholder="Section name" @keydown.enter.prevent="saveAddSection"
-                  @keydown.esc.prevent="cancelAddSection" />
+                <el-input
+                  v-model.trim="sectionAddForm.title"
+                  size="small"
+                  style="width: 160px"
+                  placeholder="Section name"
+                  @keydown.enter.prevent="saveAddSection"
+                  @keydown.esc.prevent="cancelAddSection"
+                />
               </el-form-item>
             </el-form>
 
@@ -98,33 +135,54 @@
 
     <!-- Create row -->
     <el-card v-if="addingTask" shadow="never" style="margin-bottom: 16px">
-      <el-form ref="createFormRef" :model="addDraft" :rules="taskRules" label-position="top"
-        @submit.prevent="saveCreate">
+      <el-form
+        ref="createFormRef"
+        :model="addDraft"
+        :rules="taskRules"
+        label-position="top"
+        @submit.prevent="saveCreate"
+      >
         <el-row :gutter="12">
           <el-col :span="5">
             <el-form-item prop="name" label="Task name">
-              <el-input v-model.trim="addDraft.name" placeholder="Task name *" @keydown.enter.prevent="saveCreate" />
+              <el-input
+                v-model.trim="addDraft.name"
+                placeholder="Task name *"
+                @keydown.enter.prevent="saveCreate"
+              />
             </el-form-item>
           </el-col>
 
           <el-col :span="7">
             <el-form-item label="Description">
-              <el-input v-model.trim="addDraft.description" placeholder="Description"
-                @keydown.enter.prevent="saveCreate" />
+              <el-input
+                v-model.trim="addDraft.description"
+                placeholder="Description"
+                @keydown.enter.prevent="saveCreate"
+              />
             </el-form-item>
           </el-col>
 
           <el-col :span="4">
             <el-form-item label="Status">
               <el-select v-model="addDraft.status" style="width: 100%">
-                <el-option v-for="opt in statusOptions" :key="opt" :label="opt" :value="opt" />
+                <el-option
+                  v-for="opt in statusOptions"
+                  :key="opt"
+                  :label="opt"
+                  :value="opt"
+                />
               </el-select>
             </el-form-item>
           </el-col>
 
           <el-col :span="4">
             <el-form-item prop="dueDate" label="Due date">
-              <el-date-picker v-model="addDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+              <el-date-picker
+                v-model="addDraft.dueDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
                 placeholder="Due date" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -141,19 +199,25 @@
       </el-form>
     </el-card>
 
-    <el-form ref="editTaskFormRef" :model="editDraft" :rules="taskRules" label-position="top" style="display: none">
+    <el-form
+      ref="editTaskFormRef"
+      :model="editDraft"
+      :rules="taskRules"
+      label-position="top"
+      style="display: none"
+    >
       <el-form-item prop="name" />
       <el-form-item prop="dueDate" />
     </el-form>
 
     <!-- Table -->
     <div @click.stop>
-      <el-table :data="activeRows" style="width: 100%" height="520" empty-text="No tasks yet.">
+      <el-table :data="paginatedRows" style="width: 100%" height="520" empty-text="No tasks yet.">
         <el-table-column label="Task name" min-width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
               <el-input v-model.trim="editDraft.name" placeholder="Task name" @keydown.enter.prevent="saveEdit(row)"
-                @keydown.esc.prevent="cancelEdit" />
+              @keydown.esc.prevent="cancelEdit" />
               <div v-if="editTaskErrors.name" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
                 {{ editTaskErrors.name }}
               </div>
@@ -191,8 +255,8 @@
         <el-table-column label="Due date" width="160">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-date-picker v-model="editDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
-                placeholder="Due date" style="width: 100%" />
+              <el-date-picker v-model="editDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD" 
+              placeholder="Due date" style="width: 100%" />
               <div v-if="editTaskErrors.dueDate" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
                 {{ editTaskErrors.dueDate }}
               </div>
@@ -224,7 +288,7 @@
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">Edit</el-dropdown-item>
                     <el-dropdown-item command="interchange">
-                      Interchange
+                      Interchange 
                     </el-dropdown-item>
                     <el-dropdown-item command="delete" divided>
                       Delete
@@ -254,6 +318,26 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      v-if="activeRows.length > 0"
+      style="
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+      "
+      @click.stop
+    >
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        background
+        layout="total, sizes, prev, pager, next"
+        :total="activeRows.length"
+        :page-sizes="[5, 10, 20, 50]"
+      />
     </div>
   </el-card>
 </template>
@@ -309,16 +393,45 @@ const activeSectionTitle = computed(() => activeSection.value?.title || "Todo");
 const activeRows = computed(() => {
   const sec = activeSection.value;
   if (!sec) return [];
-  return (sec.tasks || []).map((task) => ({ sectionId: sec.id, task }));
+  return (sec.tasks || []).map((task) => ({
+    sectionId: sec.id,
+    task,
+  }));
+});
+
+/** PAGINATION */
+const currentPage = ref(1);
+const pageSize = ref(5);
+
+const paginatedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return activeRows.value.slice(start, end);
 });
 
 watch(activeSectionId, () => {
+  currentPage.value = 1;
   addingTask.value = false;
   closeAllMenus();
   cancelEdit();
   cancelAddSection();
   cancelSectionEdit();
 });
+
+watch(pageSize, () => {
+  currentPage.value = 1;
+});
+
+watch(
+  activeRows,
+  (rows) => {
+    const maxPage = Math.max(1, Math.ceil(rows.length / pageSize.value));
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage;
+    }
+  },
+  { immediate: true }
+);
 
 const createFormRef = ref(null);
 const editTaskFormRef = ref(null);
