@@ -5,7 +5,22 @@
       <header class="topbar">
         <div class="top-bar-left">
           <h1 class="title">Task Management</h1>
-        </div>
+        </div> 
+
+         <!-- Search -->
+      <div class="search-bar" @click.stop>
+        <el-input
+          v-model.trim="searchTerm"
+          placeholder="Search tasks by name, description, status, or due date"
+          clearable
+        >
+          <template #prefix>
+            <el-icon>
+              <Search />
+            </el-icon>
+          </template>
+        </el-input>
+      </div>
 
         <!-- Toggle -->
         <div class="view-toggle" @click.stop>
@@ -39,9 +54,9 @@
 
       <!-- BOARD VIEW -->
       <div v-if="viewMode === 'board'" class="board-wrap">
-        <div class="board-row">
+        <div v-if="filteredSections.length" class="board-row">
           <el-card
-            v-for="sec in sections"
+            v-for="sec in filteredSections"
             :key="sec.id"
             class="col"
             shadow="never"
@@ -132,12 +147,17 @@
             </template>
           </div>
         </div>
+
+        <el-empty
+          v-else
+          description="No tasks match your search"
+        />
       </div>
 
       <!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
         <TaskTable
-          :sections="sections"
+          :sections="filteredSections"
           :status-options="statusOptions"
           @upsert="handleTaskUpsert"
           @delete="handleTaskDelete"
@@ -155,7 +175,14 @@
 import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Grid, Operation, Edit, Delete, Plus } from "@element-plus/icons-vue";
+import {
+  Grid,
+  Operation,
+  Edit,
+  Delete,
+  Plus,
+  Search,
+} from "@element-plus/icons-vue";
 import { useTaskStore } from "@/stores/taskStore";
 
 import TaskList from "./TaskList.vue";
@@ -164,13 +191,14 @@ import TaskTable from "./TaskTable.vue";
 
 const taskStore = useTaskStore();
 
-//  read store data as refs (reactive)
+// store refs
 const { sections, snack } = storeToRefs(taskStore);
 
-//  status options comes from store getter
+// status options
 const statusOptions = computed(() => taskStore.statusOptions);
 
 const viewMode = ref("board");
+const searchTerm = ref("");
 
 /** SECTION MENU */
 const menuOpenFor = ref(null);
@@ -244,12 +272,42 @@ async function requestDeleteSection(sectionId) {
     }
 
     closeAllMenus();
-
-  
   } catch {
     // user cancelled
   }
 }
+
+/** SEARCH FILTER */
+const filteredSections = computed(() => {
+  const q = (searchTerm.value || "").trim().toLowerCase();
+
+  if (!q) {
+    return sections.value;
+  }
+
+  return sections.value
+    .map((section) => {
+      const filteredTasks = (section.tasks || []).filter((task) => {
+        const haystack = [
+          task.name,
+          task.description,
+          task.status,
+          task.dueDate,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(q);
+      });
+
+      return {
+        ...section,
+        tasks: filteredTasks,
+      };
+    })
+    .filter((section) => section.tasks.length > 0);
+});
 
 /** TASK HANDLERS -> call store */
 function handleTaskUpsert(payload) {
@@ -329,6 +387,11 @@ watch(
 
 .pill-icon {
   font-size: 16px;
+}
+
+.search-bar {
+  margin: 6px 6px 14px;
+  max-width: 420px;
 }
 
 .divider {
