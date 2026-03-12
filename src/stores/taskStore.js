@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { uniqueId } from "lodash";
 
+const UNKNOWN_SECTION_TITLE = "Unknown Tasks";
+
 export const useTaskStore = defineStore("task", {
   state: () => ({
     sections: [
@@ -46,6 +48,27 @@ export const useTaskStore = defineStore("task", {
           section.id !== excludeSectionId &&
           this.normalizeSectionTitle(section.title) === normalized
       );
+    },
+
+    getOrCreateUnknownSection(excludeSectionId = null) {
+      let unknownSection = this.sections.find(
+        (section) =>
+          section.id !== excludeSectionId &&
+          this.normalizeSectionTitle(section.title) ===
+            this.normalizeSectionTitle(UNKNOWN_SECTION_TITLE)
+      );
+
+      if (!unknownSection) {
+        unknownSection = {
+          id: uniqueId("section_"),
+          title: UNKNOWN_SECTION_TITLE,
+          tasks: [],
+        };
+
+        this.sections.push(unknownSection);
+      }
+
+      return unknownSection;
     },
 
     // -------------------------
@@ -110,19 +133,31 @@ export const useTaskStore = defineStore("task", {
 
     deleteSection(sectionId) {
       const secToDelete = this.sections.find((s) => s.id === sectionId);
-      const deletedTitle = secToDelete?.title;
+      if (!secToDelete) return;
+
+      const deletedTitle = secToDelete.title;
+      const tasksToMove = secToDelete.tasks || [];
+
+      // If section has tasks, move them to Unknown Tasks
+      if (tasksToMove.length > 0) {
+        const unknownSection = this.getOrCreateUnknownSection(sectionId);
+
+        const movedTasks = tasksToMove.map((task) => ({
+          ...task,
+          status: unknownSection.title,
+        }));
+
+        unknownSection.tasks.push(...movedTasks);
+      }
 
       this.sections = this.sections.filter((s) => s.id !== sectionId);
 
-      if (deletedTitle) {
-        const fallback = this.sections[0]?.title || "Todo";
-
-        this.sections.forEach((s) => {
-          s.tasks.forEach((t) => {
-            if (t.status === deletedTitle) t.status = fallback;
-          });
-        });
-
+      if (tasksToMove.length > 0) {
+        this.showSnack(
+          `Section "${deletedTitle}" deleted and tasks moved to "${UNKNOWN_SECTION_TITLE}"`,
+          3000
+        );
+      } else {
         this.showSnack(`Section "${deletedTitle}" deleted`, 3000);
       }
     },

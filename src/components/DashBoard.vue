@@ -268,8 +268,8 @@ async function requestDeleteSection(sectionId) {
 
   try {
     await ElMessageBox.confirm(
-      `All tasks in this section will be deleted.`,
-      `Delete section "${sec.title}"?`,
+  `All tasks in this section will be moved to "${"Unknown Tasks"}".`,
+  `Delete section "${sec.title}"?`,
       {
         confirmButtonText: "Delete",
         cancelButtonText: "Cancel",
