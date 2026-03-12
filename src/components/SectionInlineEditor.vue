@@ -29,8 +29,9 @@ import { ref, watch } from "vue";
 const props = defineProps({
   modelValue: { type: String, default: "" },
   placeholder: { type: String, default: "Section name" },
+  existingTitles: { type: Array, default: () => [] },
+  currentSectionId: { type: [String, Number], default: null },
 });
-
 const emit = defineEmits(["update:modelValue", "save", "cancel"]);
 
 const formRef = ref();
@@ -42,7 +43,26 @@ const form = ref({
 const rules = {
   value: [
     { required: true, message: "Section name is required", trigger: "blur" },
-    { min: 2, message: "Section name must be at least 2 characters", trigger: "blur" },
+    {
+      min: 2,
+      message: "Section name must be at least 2 characters",
+      trigger: "blur",
+    },
+    {
+      validator: (_, value, callback) => {
+        const current = (value || "").trim().toLowerCase();
+        const exists = props.existingTitles.some(
+          (title) => (title || "").trim().toLowerCase() === current
+        );
+
+        if (exists) {
+          callback(new Error("Section name already exists"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
 };
 

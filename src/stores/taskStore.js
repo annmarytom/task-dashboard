@@ -32,6 +32,23 @@ export const useTaskStore = defineStore("task", {
 
   actions: {
     // -------------------------
+    // Duplicate section helpers
+    // -------------------------
+    normalizeSectionTitle(title) {
+      return (title || "").trim().toLowerCase();
+    },
+
+    isDuplicateSectionTitle(title, excludeSectionId = null) {
+      const normalized = this.normalizeSectionTitle(title);
+
+      return this.sections.some(
+        (section) =>
+          section.id !== excludeSectionId &&
+          this.normalizeSectionTitle(section.title) === normalized
+      );
+    },
+
+    // -------------------------
     // Snackbar
     // -------------------------
     showSnack(message, duration = 3000) {
@@ -48,33 +65,47 @@ export const useTaskStore = defineStore("task", {
     // Section Actions
     // -------------------------
     addSection(title) {
-      const v = (title || "").trim();
-      if (!v) return;
+      const cleanTitle = (title || "").trim();
+
+      if (!cleanTitle) return;
+
+      if (this.isDuplicateSectionTitle(cleanTitle)) {
+        throw new Error("Section name already exists");
+      }
 
       this.sections.push({
         id: uniqueId("section_"),
-        title: v,
+        title: cleanTitle,
         tasks: [],
       });
 
-      this.showSnack(`Section "${v}" added`, 3000);
+      this.showSnack(`Section "${cleanTitle}" added`);
     },
 
-    renameSection(sectionId, newTitle) {
-      const v = (newTitle || "").trim();
-      if (!v) return;
+    renameSection(sectionId, title) {
+      const cleanTitle = (title || "").trim();
 
-      const sec = this.sections.find((s) => s.id === sectionId);
-      if (!sec) return;
+      if (!cleanTitle) return;
 
-      const oldTitle = sec.title;
-      sec.title = v;
+      if (this.isDuplicateSectionTitle(cleanTitle, sectionId)) {
+        throw new Error("Section name already exists");
+      }
 
-      sec.tasks.forEach((t) => {
-        if (t.status === oldTitle) t.status = v;
+      const section = this.sections.find((s) => s.id === sectionId);
+      if (!section) return;
+
+      const oldTitle = section.title;
+      section.title = cleanTitle;
+
+      this.sections.forEach((s) => {
+        s.tasks.forEach((t) => {
+          if (t.status === oldTitle) {
+            t.status = cleanTitle;
+          }
+        });
       });
 
-      this.showSnack(`Section updated to "${v}"`, 3000);
+      this.showSnack(`Section renamed to "${cleanTitle}"`);
     },
 
     deleteSection(sectionId) {
@@ -107,6 +138,8 @@ export const useTaskStore = defineStore("task", {
         ...task,
         id: uniqueId("task_"),
       });
+
+      this.showSnack("Task added", 2500);
     },
 
     updateTask({ fromSectionId, editingTaskId, task }) {
@@ -126,6 +159,8 @@ export const useTaskStore = defineStore("task", {
       } else {
         fromSec.tasks[idx] = updated;
       }
+
+      this.showSnack("Task updated", 2500);
     },
 
     upsertTask({ fromSectionId, editingTaskId, task }) {

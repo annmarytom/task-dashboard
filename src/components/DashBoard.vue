@@ -66,11 +66,14 @@
               <div class="col-title">
                 <template v-if="editingSectionId === sec.id">
                   <SectionInlineEditor
-                    v-model="newSectionTitle"
-                    placeholder="Section name"
-                    @save="onRenameSection(sec.id, $event)"
-                    @cancel="cancelSectionEdit"
-                  />
+  v-model="newSectionTitle"
+  placeholder="Section name"
+  :existing-titles="sections
+    .filter((s) => s.id !== sec.id)
+    .map((s) => s.title)"
+  @save="onRenameSection(sec.id, $event)"
+  @cancel="cancelSectionEdit"
+/>
                 </template>
 
                 <template v-else>
@@ -126,11 +129,12 @@
           <div class="addCol" @click.stop>
             <template v-if="addingSection">
               <SectionInlineEditor
-                v-model="newSectionTitle"
-                placeholder="Section name"
-                @save="onAddSection"
-                @cancel="cancelNewSection"
-              />
+  v-model="newSectionTitle"
+  placeholder="Section name"
+  :existing-titles="sections.map((s) => s.title)"
+  @save="onAddSection"
+  @cancel="cancelNewSection"
+/>
             </template>
 
             <template v-else>
@@ -224,9 +228,13 @@ function cancelNewSection() {
 }
 
 function onAddSection(title) {
-  taskStore.addSection(title);
-  addingSection.value = false;
-  newSectionTitle.value = "";
+  try {
+    taskStore.addSection(title);
+    addingSection.value = false;
+    newSectionTitle.value = "";
+  } catch (error) {
+    ElMessage.error(error.message || "Unable to add section");
+  }
 }
 
 function startEditSection(sectionId) {
@@ -245,9 +253,13 @@ function cancelSectionEdit() {
 }
 
 function onRenameSection(sectionId, title) {
-  taskStore.renameSection(sectionId, title);
-  editingSectionId.value = null;
-  newSectionTitle.value = "";
+  try {
+    taskStore.renameSection(sectionId, title);
+    editingSectionId.value = null;
+    newSectionTitle.value = "";
+  } catch (error) {
+    ElMessage.error(error.message || "Unable to rename section");
+  }
 }
 
 async function requestDeleteSection(sectionId) {

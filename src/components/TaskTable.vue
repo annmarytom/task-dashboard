@@ -329,7 +329,9 @@ function setSectionEditFormRef(el) {
     sectionEditFormRef.value = el;
   }
 }
-
+function normalizeTitle(title) {
+  return (title || "").trim().toLowerCase();
+}
 const sectionAddFormRef = ref(null);
 
 const taskRules = {
@@ -364,6 +366,23 @@ const sectionRules = {
     {
       min: 2,
       message: "Section name must be at least 2 characters",
+      trigger: "blur",
+    },
+    {
+      validator: (_, value, callback) => {
+        const normalized = normalizeTitle(value);
+
+        const duplicate = props.sections.some((section) => {
+          if (editingSectionId.value === section.id) return false;
+          return normalizeTitle(section.title) === normalized;
+        });
+
+        if (duplicate) {
+          callback(new Error("Section name already exists"));
+        } else {
+          callback();
+        }
+      },
       trigger: "blur",
     },
   ],
