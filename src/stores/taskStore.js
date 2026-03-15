@@ -2,9 +2,10 @@ import { defineStore } from "pinia";
 import { uniqueId } from "lodash";
 
 const UNKNOWN_SECTION_TITLE = "Unknown Tasks";
+const STORAGE_KEY = "task-management-store";
 
-export const useTaskStore = defineStore("task", {
-  state: () => ({
+function getDefaultState() {
+  return {
     sections: [
       {
         id: uniqueId("section_"),
@@ -12,13 +13,42 @@ export const useTaskStore = defineStore("task", {
         tasks: [],
       },
     ],
-
     snack: {
       open: false,
       message: "",
       duration: 3000,
     },
-  }),
+  };
+}
+
+function loadStateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+      return getDefaultState();
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return {
+      sections: Array.isArray(parsed.sections) && parsed.sections.length
+        ? parsed.sections
+        : getDefaultState().sections,
+      snack: {
+        open: false,
+        message: "",
+        duration: 3000,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to load task store from localStorage:", error);
+    return getDefaultState();
+  }
+}
+
+export const useTaskStore = defineStore("task", {
+  state: () => loadStateFromLocalStorage(),
 
   getters: {
     statusOptions: (state) => state.sections.map((s) => s.title),
@@ -33,6 +63,22 @@ export const useTaskStore = defineStore("task", {
   },
 
   actions: {
+    // -------------------------
+    // localStorage helper
+    // -------------------------
+    saveToLocalStorage() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            sections: this.sections,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to save task store to localStorage:", error);
+      }
+    },
+
     // -------------------------
     // Duplicate section helpers
     // -------------------------
@@ -102,6 +148,7 @@ export const useTaskStore = defineStore("task", {
         tasks: [],
       });
 
+      this.saveToLocalStorage();
       this.showSnack(`Section "${cleanTitle}" added`);
     },
 
@@ -128,6 +175,7 @@ export const useTaskStore = defineStore("task", {
         });
       });
 
+      this.saveToLocalStorage();
       this.showSnack(`Section renamed to "${cleanTitle}"`);
     },
 
@@ -138,7 +186,6 @@ export const useTaskStore = defineStore("task", {
       const deletedTitle = secToDelete.title;
       const tasksToMove = secToDelete.tasks || [];
 
-      // If section has tasks, move them to Unknown Tasks
       if (tasksToMove.length > 0) {
         const unknownSection = this.getOrCreateUnknownSection(sectionId);
 
@@ -151,6 +198,8 @@ export const useTaskStore = defineStore("task", {
       }
 
       this.sections = this.sections.filter((s) => s.id !== sectionId);
+
+      this.saveToLocalStorage();
 
       if (tasksToMove.length > 0) {
         this.showSnack(
@@ -174,6 +223,7 @@ export const useTaskStore = defineStore("task", {
         id: uniqueId("task_"),
       });
 
+      this.saveToLocalStorage();
       this.showSnack("Task added", 2500);
     },
 
@@ -195,6 +245,7 @@ export const useTaskStore = defineStore("task", {
         fromSec.tasks[idx] = updated;
       }
 
+      this.saveToLocalStorage();
       this.showSnack("Task updated", 2500);
     },
 
@@ -216,6 +267,7 @@ export const useTaskStore = defineStore("task", {
 
       sec.tasks.splice(idx, 1);
 
+      this.saveToLocalStorage();
       this.showSnack("Task deleted", 2500);
     },
 
@@ -229,6 +281,16 @@ export const useTaskStore = defineStore("task", {
 
       const [task] = sec.tasks.splice(fromIndex, 1);
       sec.tasks.splice(newIndex, 0, task);
+
+      this.saveToLocalStorage();
+    },
+
+    // optional helper
+    resetStore() {
+      const fresh = getDefaultState();
+      this.sections = fresh.sections;
+      this.snack = fresh.snack;
+      this.saveToLocalStorage();
     },
   },
 });
