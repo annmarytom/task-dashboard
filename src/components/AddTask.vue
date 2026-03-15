@@ -35,11 +35,8 @@
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="Status">
-            <el-select
-              v-model="form.status"
-              placeholder="Select Status"
-              style="width: 100%;"
-            >
+           <el-select v-model="form.status" placeholder="Select or create section" filterable allow-create
+              default-first-option style="width: 100%;">
               <el-option
                 v-for="opt in statusOptions"
                 :key="opt"

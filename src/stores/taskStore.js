@@ -63,7 +63,7 @@ export const useTaskStore = defineStore("task", {
   },
 
   actions: {
-    // -------------------------
+       // -------------------------
     // localStorage helper
     // -------------------------
     saveToLocalStorage() {
@@ -79,7 +79,7 @@ export const useTaskStore = defineStore("task", {
       }
     },
 
-    // -------------------------
+   // -------------------------
     // Duplicate section helpers
     // -------------------------
     normalizeSectionTitle(title) {
@@ -94,6 +94,30 @@ export const useTaskStore = defineStore("task", {
           section.id !== excludeSectionId &&
           this.normalizeSectionTitle(section.title) === normalized
       );
+    },
+
+    ensureSectionExists(title) {
+      const cleanTitle = (title || "").trim();
+
+      if (!cleanTitle) return null;
+
+      let section = this.sections.find(
+        (s) =>
+          this.normalizeSectionTitle(s.title) ===
+          this.normalizeSectionTitle(cleanTitle)
+      );
+
+      if (!section) {
+        section = {
+          id: uniqueId("section_"),
+          title: cleanTitle,
+          tasks: [],
+        };
+
+        this.sections.push(section);
+      }
+
+      return section;
     },
 
     getOrCreateUnknownSection(excludeSectionId = null) {
@@ -117,7 +141,7 @@ export const useTaskStore = defineStore("task", {
       return unknownSection;
     },
 
-    // -------------------------
+   // -------------------------
     // Snackbar
     // -------------------------
     showSnack(message, duration = 3000) {
@@ -211,16 +235,17 @@ export const useTaskStore = defineStore("task", {
       }
     },
 
-    // -------------------------
+      // -------------------------
     // Task Actions
     // -------------------------
     addTask(task) {
-      const sec = this.sections.find((s) => s.title === task.status);
+      const sec = this.ensureSectionExists(task.status);
       if (!sec) return;
 
       sec.tasks.push({
         ...task,
         id: uniqueId("task_"),
+        status: sec.title,
       });
 
       this.saveToLocalStorage();
@@ -236,9 +261,12 @@ export const useTaskStore = defineStore("task", {
 
       const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId };
 
-      const toSec = this.sections.find((s) => s.title === updated.status);
+      const toSec = this.ensureSectionExists(updated.status);
+      if (!toSec) return;
 
-      if (toSec && toSec.id !== fromSec.id) {
+      updated.status = toSec.title;
+
+      if (toSec.id !== fromSec.id) {
         fromSec.tasks.splice(idx, 1);
         toSec.tasks.push(updated);
       } else {
@@ -284,8 +312,8 @@ export const useTaskStore = defineStore("task", {
 
       this.saveToLocalStorage();
     },
-
-    // optional helper
+  
+     // optional helper
     resetStore() {
       const fresh = getDefaultState();
       this.sections = fresh.sections;

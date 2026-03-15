@@ -165,7 +165,8 @@
 
           <el-col :span="4">
             <el-form-item label="Status">
-              <el-select v-model="addDraft.status" style="width: 100%">
+              <el-select v-model="addDraft.status" placeholder="Select or create section" filterable allow-create
+                default-first-option style="width: 100%">
                 <el-option
                   v-for="opt in statusOptions"
                   :key="opt"
@@ -242,7 +243,8 @@
         <el-table-column label="Status" width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-select v-model="editDraft.status" style="width: 100%">
+             <el-select v-model="editDraft.status" placeholder="Select or create section" filterable allow-create
+                default-first-option style="width: 100%">
                 <el-option v-for="opt in statusOptions" :key="opt" :label="opt" :value="opt" />
               </el-select>
             </template>
