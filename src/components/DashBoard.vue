@@ -1,6 +1,11 @@
 <template>
   <div class="page">
-    <section class="shell" @click="closeAllMenus">
+    <section
+        class="shell"
+        @click="closeAllMenus"
+        v-loading="loading.bootstrapping"
+        element-loading-text="Loading tasks..."
+>
       <!-- Header -->
       <header class="topbar">
         <div class="top-bar-left">
@@ -26,6 +31,19 @@
         <div class="view-toggle" @click.stop>
           <el-button
             class="pill"
+            :type="viewMode === 'board' ? 'warning' : 'default'"
+            :plain="viewMode !== 'board'"
+            @click="viewMode = 'board'"
+          >
+            <el-icon class="pill-icon">
+              <Grid />
+            </el-icon>
+            Board View
+          </el-button>
+
+
+          <el-button
+            class="pill"
             :type="viewMode === 'table' ? 'warning' : 'default'"
             :plain="viewMode !== 'table'"
             @click="viewMode = 'table'"
@@ -36,17 +54,7 @@
             Table View
           </el-button>
 
-          <el-button
-            class="pill"
-            :type="viewMode === 'board' ? 'warning' : 'default'"
-            :plain="viewMode !== 'board'"
-            @click="viewMode = 'board'"
-          >
-            <el-icon class="pill-icon">
-              <Grid />
-            </el-icon>
-            Board View
-          </el-button>
+          
         </div>
       </header>
 
@@ -68,9 +76,8 @@
                   <SectionInlineEditor
   v-model="newSectionTitle"
   placeholder="Section name"
-  :existing-titles="sections
-    .filter((s) => s.id !== sec.id)
-    .map((s) => s.title)"
+  :existing-titles="sections.filter((s) => s.id !== sec.id).map((s) => s.title)"
+  :loading="loading.renamingSectionId === sec.id"
   @save="onRenameSection(sec.id, $event)"
   @cancel="cancelSectionEdit"
 />
@@ -86,25 +93,27 @@
                 class="col-header-actions"
                 v-if="editingSectionId !== sec.id"
               >
-                <el-button
-                  circle
-                  size="small"
-                  class="icon-btn"
-                  title="Edit"
-                  @click.stop="startEditSection(sec.id)"
-                >
+              <el-button
+  circle
+  size="small"
+  class="icon-btn"
+  title="Edit"
+  :loading="loading.renamingSectionId === sec.id"
+  @click.stop="startEditSection(sec.id)"
+>
                   <el-icon>
                     <Edit />
                   </el-icon>
                 </el-button>
 
                 <el-button
-                  circle
-                  size="small"
-                  class="icon-btn danger"
-                  title="Delete"
-                  @click.stop="requestDeleteSection(sec.id)"
-                >
+  circle
+  size="small"
+  class="icon-btn danger"
+  title="Delete"
+  :loading="loading.deletingSectionId === sec.id"
+  @click.stop="requestDeleteSection(sec.id)"
+>
                   <el-icon>
                     <Delete />
                   </el-icon>
@@ -114,15 +123,16 @@
 
             <!-- TaskList  -->
             <TaskList
-              :section-id="sec.id"
-              :section-title="sec.title"
-              :tasks="sec.tasks"
-              :status-options="statusOptions"
-              :default-status="sec.title"
-              @upsert="handleTaskUpsert"
-              @delete="handleTaskDelete"
-              @move="handleTaskMove"
-            />
+  :section-id="sec.id"
+  :section-title="sec.title"
+  :tasks="sec.tasks"
+  :status-options="statusOptions"
+  :default-status="sec.title"
+  :loading-state="loading"
+  @upsert="handleTaskUpsert"
+  @delete="handleTaskDelete"
+  @move="handleTaskMove"
+/>
           </el-card>
 
           <!-- Add Section column -->
@@ -132,6 +142,7 @@
   v-model="newSectionTitle"
   placeholder="Section name"
   :existing-titles="sections.map((s) => s.title)"
+  :loading="loading.addingSection"
   @save="onAddSection"
   @cancel="cancelNewSection"
 />
@@ -139,10 +150,11 @@
 
             <template v-else>
               <el-button
-                class="add-section-btn"
-                type="default"
-                @click="startAddSection"
-              >
+  class="add-section-btn"
+  type="default"
+  :loading="loading.addingSection"
+  @click="startAddSection"
+>
                 <el-icon>
                   <Plus />
                 </el-icon>
@@ -161,22 +173,23 @@
       <!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
         <TaskTable
-          :sections="filteredSections"
-          :status-options="statusOptions"
-          @upsert="handleTaskUpsert"
-          @delete="handleTaskDelete"
-          @move="handleTaskMove"
-          @add-section-requested="onAddSection"
-          @rename-section-requested="onRenameSection"
-          @delete-section-requested="requestDeleteSection"
-        />
+  :sections="filteredSections"
+  :status-options="statusOptions"
+  :loading-state="loading"
+  @upsert="handleTaskUpsert"
+  @delete="handleTaskDelete"
+  @move="handleTaskMove"
+  @add-section-requested="onAddSection"
+  @rename-section-requested="onRenameSection"
+  @delete-section-requested="requestDeleteSection"
+/>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
@@ -194,23 +207,22 @@ import SectionInlineEditor from "./SectionInlineEditor.vue";
 import TaskTable from "./TaskTable.vue";
 
 const taskStore = useTaskStore();
+const { sections, snack, loading } = storeToRefs(taskStore);
 
-// store refs
-const { sections, snack } = storeToRefs(taskStore);
-
-// status options
 const statusOptions = computed(() => taskStore.statusOptions);
 
 const viewMode = ref("board");
 const searchTerm = ref("");
 
-/** SECTION MENU */
+onMounted(async () => {
+  await taskStore.initializeStore();
+});
+
 const menuOpenFor = ref(null);
 function closeAllMenus() {
   menuOpenFor.value = null;
 }
 
-/** ADD/EDIT SECTION INLINE STATE */
 const addingSection = ref(false);
 const editingSectionId = ref(null);
 const newSectionTitle = ref("");
@@ -227,9 +239,9 @@ function cancelNewSection() {
   newSectionTitle.value = "";
 }
 
-function onAddSection(title) {
+async function onAddSection(title) {
   try {
-    taskStore.addSection(title);
+    await taskStore.addSection(title);
     addingSection.value = false;
     newSectionTitle.value = "";
   } catch (error) {
@@ -252,9 +264,9 @@ function cancelSectionEdit() {
   newSectionTitle.value = "";
 }
 
-function onRenameSection(sectionId, title) {
+async function onRenameSection(sectionId, title) {
   try {
-    taskStore.renameSection(sectionId, title);
+    await taskStore.renameSection(sectionId, title);
     editingSectionId.value = null;
     newSectionTitle.value = "";
   } catch (error) {
@@ -268,8 +280,8 @@ async function requestDeleteSection(sectionId) {
 
   try {
     await ElMessageBox.confirm(
-  `All tasks in this section will be moved to "${"Unknown Tasks"}".`,
-  `Delete section "${sec.title}"?`,
+      `All tasks in this section will be moved to "Unknown Tasks".`,
+      `Delete section "${sec.title}"?`,
       {
         confirmButtonText: "Delete",
         cancelButtonText: "Cancel",
@@ -277,7 +289,7 @@ async function requestDeleteSection(sectionId) {
       }
     );
 
-    taskStore.deleteSection(sectionId);
+    await taskStore.deleteSection(sectionId);
 
     if (editingSectionId.value === sectionId) {
       cancelSectionEdit();
@@ -289,7 +301,6 @@ async function requestDeleteSection(sectionId) {
   }
 }
 
-/** SEARCH FILTER */
 const filteredSections = computed(() => {
   const q = (searchTerm.value || "").trim().toLowerCase();
 
@@ -321,13 +332,12 @@ const filteredSections = computed(() => {
     .filter((section) => section.tasks.length > 0);
 });
 
-/** TASK HANDLERS -> call store */
-function handleTaskUpsert(payload) {
-  taskStore.upsertTask(payload);
+async function handleTaskUpsert(payload) {
+  await taskStore.upsertTask(payload);
 }
 
-function handleTaskDelete(payload) {
-  taskStore.deleteTask(payload);
+async function handleTaskDelete(payload) {
+  await taskStore.deleteTask(payload);
   closeAllMenus();
 }
 
@@ -335,7 +345,6 @@ function handleTaskMove(payload) {
   taskStore.moveTask(payload);
 }
 
-/** SNACKBAR -> Element Plus Message */
 watch(
   () => snack.value.open,
   (isOpen) => {

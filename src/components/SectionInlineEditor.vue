@@ -10,14 +10,15 @@
         <el-input
           v-model.trim="form.value"
           :placeholder="placeholder"
+          :disabled="loading"
           @keydown.enter.prevent="onSave"
           @keydown.esc.prevent="onCancel"
         />
       </el-form-item>
 
       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
-        <el-button type="primary" @click="onSave">Save</el-button>
-        <el-button @click="onCancel">Cancel</el-button>
+        <el-button type="primary" :loading="loading" @click="onSave">Save</el-button>
+        <el-button :disabled="loading" @click="onCancel">Cancel</el-button>
       </div>
     </el-form>
   </el-card>
@@ -31,6 +32,7 @@ const props = defineProps({
   placeholder: { type: String, default: "Section name" },
   existingTitles: { type: Array, default: () => [] },
   currentSectionId: { type: [String, Number], default: null },
+  loading: { type: Boolean, default: false },
 });
 const emit = defineEmits(["update:modelValue", "save", "cancel"]);
 

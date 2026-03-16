@@ -1,19 +1,20 @@
 <template>
   <div>
     <el-space direction="vertical" fill style="width: 100%">
-      <el-button type="primary" @click="openAdd">
-        + Add Task
-      </el-button>
+      <el-button type="primary" :loading="loadingState.creatingTask" @click="openAdd">
+  + Add Task
+</el-button>
 
       <!-- Inline ADD form -->
       <el-card v-if="addingTask" shadow="never">
         <AddTask
-          :status-options="statusOptions"
-          :default-status="defaultStatus"
-          :initial-task="null"
-          @cancel="closeForms"
-          @save="onSaveTask"
-        />
+        :status-options="statusOptions"
+        :default-status="defaultStatus"
+        :initial-task="null"
+        :loading="loadingState.creatingTask"
+        @cancel="closeForms"
+        @save="onSaveTask"
+/>
       </el-card>
 
       <el-space direction="vertical" fill style="width: 100%">
@@ -21,12 +22,13 @@
           <!-- Inline EDIT form -->
           <el-card v-if="editingTaskId === t.id" shadow="never">
             <AddTask
-              :status-options="statusOptions"
-              :default-status="defaultStatus"
-              :initial-task="t"
-              @cancel="closeForms"
-              @save="onSaveTask"
-            />
+             :status-options="statusOptions"
+             :default-status="defaultStatus"
+             :initial-task="t"
+             :loading="loadingState.updatingTaskId === t.id"
+             @cancel="closeForms"
+             @save="onSaveTask"
+/>
           </el-card>
 
           <!-- Normal card -->
@@ -60,9 +62,9 @@
                 "
               >
                 <el-space>
-                  <el-button circle @click="openEdit(t.id)">
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
+                  <el-button circle :loading="loadingState.updatingTaskId === t.id" @click="openEdit(t.id)">
+  <el-icon><Edit /></el-icon>
+</el-button>
 
                   <el-popover
                     placement="bottom-start"
@@ -96,9 +98,14 @@
                   </el-popover>
                 </el-space>
 
-                <el-button type="danger" circle @click="onDelete(t.id)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
+                <el-button
+                   type="danger"
+                   circle
+                   :loading="loadingState.deletingTaskId === t.id"
+                   @click="onDelete(t.id)"
+>
+  <el-icon><Delete /></el-icon>
+</el-button>
               </div>
             </el-space>
           </el-card>
@@ -120,6 +127,7 @@ const props = defineProps({
   tasks: { type: Array, default: () => [] },
   statusOptions: { type: Array, default: () => [] },
   defaultStatus: { type: String, default: "Todo" },
+  loadingState: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(["upsert", "delete", "move"]);
@@ -144,7 +152,7 @@ function closeForms() {
   editingTaskId.value = null;
 }
 
-function onSaveTask(task) {
+ async function onSaveTask(task) {
   emit("upsert", {
     fromSectionId: props.sectionId,
     editingTaskId: editingTaskId.value,

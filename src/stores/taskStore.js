@@ -13,42 +13,48 @@ function getDefaultState() {
         tasks: [],
       },
     ],
+  };
+}
+
+function readSectionsFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+      return getDefaultState().sections;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return Array.isArray(parsed.sections) && parsed.sections.length
+      ? parsed.sections
+      : getDefaultState().sections;
+  } catch (error) {
+    console.error("Failed to load task store from localStorage:", error);
+    return getDefaultState().sections;
+  }
+}
+
+export const useTaskStore = defineStore("task", {
+  state: () => ({
+    sections: [],
     snack: {
       open: false,
       message: "",
       duration: 3000,
     },
-  };
-}
+    loading: {
+      bootstrapping: false,
 
-function loadStateFromLocalStorage() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+      addingSection: false,
+      renamingSectionId: null,
+      deletingSectionId: null,
 
-    if (!saved) {
-      return getDefaultState();
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return {
-      sections: Array.isArray(parsed.sections) && parsed.sections.length
-        ? parsed.sections
-        : getDefaultState().sections,
-      snack: {
-        open: false,
-        message: "",
-        duration: 3000,
-      },
-    };
-  } catch (error) {
-    console.error("Failed to load task store from localStorage:", error);
-    return getDefaultState();
-  }
-}
-
-export const useTaskStore = defineStore("task", {
-  state: () => loadStateFromLocalStorage(),
+      creatingTask: false,
+      updatingTaskId: null,
+      deletingTaskId: null,
+    },
+  }),
 
   getters: {
     statusOptions: (state) => state.sections.map((s) => s.title),
@@ -60,10 +66,35 @@ export const useTaskStore = defineStore("task", {
     sectionByTitle: (state) => {
       return (title) => state.sections.find((s) => s.title === title);
     },
+
+    isSectionRenaming: (state) => {
+      return (sectionId) => state.loading.renamingSectionId === sectionId;
+    },
+
+    isSectionDeleting: (state) => {
+      return (sectionId) => state.loading.deletingSectionId === sectionId;
+    },
+
+    isTaskUpdating: (state) => {
+      return (taskId) => state.loading.updatingTaskId === taskId;
+    },
+
+    isTaskDeleting: (state) => {
+      return (taskId) => state.loading.deletingTaskId === taskId;
+    },
   },
 
   actions: {
-       // -------------------------
+    // -------------------------
+    // fake api delay
+    // -------------------------
+    simulateApi(payload = null, delay = 2000) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(payload), delay);
+      });
+    },
+
+    // -------------------------
     // localStorage helper
     // -------------------------
     saveToLocalStorage() {
@@ -79,7 +110,18 @@ export const useTaskStore = defineStore("task", {
       }
     },
 
-   // -------------------------
+    async initializeStore() {
+      this.loading.bootstrapping = true;
+
+      try {
+        await this.simulateApi();
+        this.sections = readSectionsFromLocalStorage();
+      } finally {
+        this.loading.bootstrapping = false;
+      }
+    },
+
+    // -------------------------
     // Duplicate section helpers
     // -------------------------
     normalizeSectionTitle(title) {
@@ -141,7 +183,7 @@ export const useTaskStore = defineStore("task", {
       return unknownSection;
     },
 
-   // -------------------------
+    // -------------------------
     // Snackbar
     // -------------------------
     showSnack(message, duration = 3000) {
@@ -157,7 +199,7 @@ export const useTaskStore = defineStore("task", {
     // -------------------------
     // Section Actions
     // -------------------------
-    addSection(title) {
+    async addSection(title) {
       const cleanTitle = (title || "").trim();
 
       if (!cleanTitle) return;
@@ -166,17 +208,25 @@ export const useTaskStore = defineStore("task", {
         throw new Error("Section name already exists");
       }
 
-      this.sections.push({
-        id: uniqueId("section_"),
-        title: cleanTitle,
-        tasks: [],
-      });
+      this.loading.addingSection = true;
 
-      this.saveToLocalStorage();
-      this.showSnack(`Section "${cleanTitle}" added`);
+      try {
+        await this.simulateApi();
+
+        this.sections.push({
+          id: uniqueId("section_"),
+          title: cleanTitle,
+          tasks: [],
+        });
+
+        this.saveToLocalStorage();
+        this.showSnack(`Section "${cleanTitle}" added`);
+      } finally {
+        this.loading.addingSection = false;
+      }
     },
 
-    renameSection(sectionId, title) {
+    async renameSection(sectionId, title) {
       const cleanTitle = (title || "").trim();
 
       if (!cleanTitle) return;
@@ -188,115 +238,155 @@ export const useTaskStore = defineStore("task", {
       const section = this.sections.find((s) => s.id === sectionId);
       if (!section) return;
 
-      const oldTitle = section.title;
-      section.title = cleanTitle;
+      this.loading.renamingSectionId = sectionId;
 
-      this.sections.forEach((s) => {
-        s.tasks.forEach((t) => {
-          if (t.status === oldTitle) {
-            t.status = cleanTitle;
-          }
+      try {
+        await this.simulateApi();
+
+        const oldTitle = section.title;
+        section.title = cleanTitle;
+
+        this.sections.forEach((s) => {
+          s.tasks.forEach((t) => {
+            if (t.status === oldTitle) {
+              t.status = cleanTitle;
+            }
+          });
         });
-      });
 
-      this.saveToLocalStorage();
-      this.showSnack(`Section renamed to "${cleanTitle}"`);
+        this.saveToLocalStorage();
+        this.showSnack(`Section renamed to "${cleanTitle}"`);
+      } finally {
+        this.loading.renamingSectionId = null;
+      }
     },
 
-    deleteSection(sectionId) {
+    async deleteSection(sectionId) {
       const secToDelete = this.sections.find((s) => s.id === sectionId);
       if (!secToDelete) return;
 
-      const deletedTitle = secToDelete.title;
-      const tasksToMove = secToDelete.tasks || [];
+      this.loading.deletingSectionId = sectionId;
 
-      if (tasksToMove.length > 0) {
-        const unknownSection = this.getOrCreateUnknownSection(sectionId);
+      try {
+        await this.simulateApi();
 
-        const movedTasks = tasksToMove.map((task) => ({
-          ...task,
-          status: unknownSection.title,
-        }));
+        const deletedTitle = secToDelete.title;
+        const tasksToMove = secToDelete.tasks || [];
 
-        unknownSection.tasks.push(...movedTasks);
-      }
+        if (tasksToMove.length > 0) {
+          const unknownSection = this.getOrCreateUnknownSection(sectionId);
 
-      this.sections = this.sections.filter((s) => s.id !== sectionId);
+          const movedTasks = tasksToMove.map((task) => ({
+            ...task,
+            status: unknownSection.title,
+          }));
 
-      this.saveToLocalStorage();
+          unknownSection.tasks.push(...movedTasks);
+        }
 
-      if (tasksToMove.length > 0) {
-        this.showSnack(
-          `Section "${deletedTitle}" deleted and tasks moved to "${UNKNOWN_SECTION_TITLE}"`,
-          3000
-        );
-      } else {
-        this.showSnack(`Section "${deletedTitle}" deleted`, 3000);
+        this.sections = this.sections.filter((s) => s.id !== sectionId);
+
+        this.saveToLocalStorage();
+
+        if (tasksToMove.length > 0) {
+          this.showSnack(
+            `Section "${deletedTitle}" deleted and tasks moved to "${UNKNOWN_SECTION_TITLE}"`,
+            3000
+          );
+        } else {
+          this.showSnack(`Section "${deletedTitle}" deleted`, 3000);
+        }
+      } finally {
+        this.loading.deletingSectionId = null;
       }
     },
 
-      // -------------------------
+    // -------------------------
     // Task Actions
     // -------------------------
-    addTask(task) {
+    async addTask(task) {
       const sec = this.ensureSectionExists(task.status);
       if (!sec) return;
 
-      sec.tasks.push({
-        ...task,
-        id: uniqueId("task_"),
-        status: sec.title,
-      });
+      this.loading.creatingTask = true;
 
-      this.saveToLocalStorage();
-      this.showSnack("Task added", 2500);
+      try {
+        await this.simulateApi();
+
+        sec.tasks.push({
+          ...task,
+          id: uniqueId("task_"),
+          status: sec.title,
+        });
+
+        this.saveToLocalStorage();
+        this.showSnack("Task added", 2500);
+      } finally {
+        this.loading.creatingTask = false;
+      }
     },
 
-    updateTask({ fromSectionId, editingTaskId, task }) {
+    async updateTask({ fromSectionId, editingTaskId, task }) {
       const fromSec = this.sections.find((s) => s.id === fromSectionId);
       if (!fromSec) return;
 
       const idx = fromSec.tasks.findIndex((t) => t.id === editingTaskId);
       if (idx === -1) return;
 
-      const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId };
+      this.loading.updatingTaskId = editingTaskId;
 
-      const toSec = this.ensureSectionExists(updated.status);
-      if (!toSec) return;
+      try {
+        await this.simulateApi();
 
-      updated.status = toSec.title;
+        const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId };
 
-      if (toSec.id !== fromSec.id) {
-        fromSec.tasks.splice(idx, 1);
-        toSec.tasks.push(updated);
-      } else {
-        fromSec.tasks[idx] = updated;
+        const toSec = this.ensureSectionExists(updated.status);
+        if (!toSec) return;
+
+        updated.status = toSec.title;
+
+        if (toSec.id !== fromSec.id) {
+          fromSec.tasks.splice(idx, 1);
+          toSec.tasks.push(updated);
+        } else {
+          fromSec.tasks[idx] = updated;
+        }
+
+        this.saveToLocalStorage();
+        this.showSnack("Task updated", 2500);
+      } finally {
+        this.loading.updatingTaskId = null;
       }
-
-      this.saveToLocalStorage();
-      this.showSnack("Task updated", 2500);
     },
 
-    upsertTask({ fromSectionId, editingTaskId, task }) {
+    async upsertTask({ fromSectionId, editingTaskId, task }) {
       if (editingTaskId) {
-        this.updateTask({ fromSectionId, editingTaskId, task });
+        await this.updateTask({ fromSectionId, editingTaskId, task });
         return;
       }
 
-      this.addTask(task);
+      await this.addTask(task);
     },
 
-    deleteTask({ sectionId, taskId }) {
+    async deleteTask({ sectionId, taskId }) {
       const sec = this.sections.find((s) => s.id === sectionId);
       if (!sec) return;
 
       const idx = sec.tasks.findIndex((t) => t.id === taskId);
       if (idx === -1) return;
 
-      sec.tasks.splice(idx, 1);
+      this.loading.deletingTaskId = taskId;
 
-      this.saveToLocalStorage();
-      this.showSnack("Task deleted", 2500);
+      try {
+        await this.simulateApi();
+
+        sec.tasks.splice(idx, 1);
+
+        this.saveToLocalStorage();
+        this.showSnack("Task deleted", 2500);
+      } finally {
+        this.loading.deletingTaskId = null;
+      }
     },
 
     moveTask({ sectionId, taskId, newIndex }) {
@@ -312,12 +402,10 @@ export const useTaskStore = defineStore("task", {
 
       this.saveToLocalStorage();
     },
-  
-     // optional helper
+
     resetStore() {
       const fresh = getDefaultState();
       this.sections = fresh.sections;
-      this.snack = fresh.snack;
       this.saveToLocalStorage();
     },
   },

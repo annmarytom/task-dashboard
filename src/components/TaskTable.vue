@@ -20,18 +20,24 @@
                 <span>{{ sec.title }} ({{ (sec.tasks || []).length }})</span>
 
                 <span @click.stop>
-                  <el-button size="small" circle @click.stop="startEditSection(sec)">
+                  <el-button
+                    size="small"
+                    circle
+                    :loading="loadingState.renamingSectionId === sec.id"
+                    @click.stop="startEditSection(sec)"
+>
                     <el-icon>
                       <Edit />
                     </el-icon>
                   </el-button>
 
                   <el-button
-                    size="small"
-                    type="danger"
-                    circle
-                    @click.stop="requestDeleteSection(sec)"
-                  >
+  size="small"
+  type="danger"
+  circle
+  :loading="loadingState.deletingSectionId === sec.id"
+  @click.stop="requestDeleteSection(sec)"
+>
                     <el-icon>
                       <Delete />
                     </el-icon>
@@ -60,11 +66,12 @@
                 </el-form>
 
                 <el-button
-                  size="small"
-                  type="success"
-                  circle
-                  @click.stop="saveSectionEdit(sec.id)"
-                >
+  size="small"
+  type="success"
+  circle
+  :loading="loadingState.renamingSectionId === sec.id"
+  @click.stop="saveSectionEdit(sec.id)"
+>
                   <el-icon>
                     <Check />
                   </el-icon>
@@ -84,17 +91,13 @@
       <div>
         <template v-if="!addingSection">
           <el-button
-            plain
-            @click="openAddSection"
-            style="
-              width: 200px;
-              height: 38px;
-              border: 2px dashed #cbd5e1;
-              font-weight: 800;
-            "
-          >
-            + Add Section
-          </el-button>
+             plain
+             :loading="loadingState.addingSection"
+             @click="openAddSection"
+             style="width: 200px; height: 38px; border: 2px dashed #cbd5e1; font-weight: 800;"
+>
+  + Add Section
+</el-button>
         </template>
 
         <template v-else>
@@ -117,7 +120,13 @@
               </el-form-item>
             </el-form>
 
-            <el-button size="small" type="success" circle @click.stop="saveAddSection">
+            <el-button
+              size="small"
+              type="success"
+              circle
+              :loading="loadingState.addingSection"
+              @click.stop="saveAddSection"
+>
               <el-icon>
                 <Check />
               </el-icon>
@@ -134,7 +143,12 @@
     </div>
 
     <!-- Create row -->
-    <el-card v-if="addingTask" shadow="never" style="margin-bottom: 16px">
+    <el-card
+      v-if="addingTask"
+      shadow="never"
+      style="margin-bottom: 16px"
+      v-loading="loadingState.creatingTask"
+>
       <el-form
         ref="createFormRef"
         :model="addDraft"
@@ -191,8 +205,8 @@
           <el-col :span="4">
             <el-form-item label=" ">
               <el-space>
-                <el-button type="primary" @click="saveCreate">Add</el-button>
-                <el-button @click="closeCreate">Cancel</el-button>
+                <el-button type="primary" :loading="loadingState.creatingTask" @click="saveCreate">Add</el-button>
+                 <el-button :disabled="loadingState.creatingTask" @click="closeCreate">Cancel</el-button>
               </el-space>
             </el-form-item>
           </el-col>
@@ -273,18 +287,22 @@
           <template #default="{ row }">
             <template v-if="isEditing(row)">
               <el-space>
-                <el-button type="primary" @click="saveEdit(row)">Save</el-button>
-                <el-button @click="cancelEdit">Cancel</el-button>
+                <el-button type="primary" :loading="loadingState.updatingTaskId === row.task.id" @click="saveEdit(row)">
+                Save
+                </el-button>
+                <el-button :disabled="loadingState.updatingTaskId === row.task.id" @click="cancelEdit">
+                 Cancel
+                </el-button>
               </el-space>
             </template>
 
             <template v-else>
               <el-dropdown trigger="click" @command="(cmd) => handleRowCommand(cmd, row)">
-                <el-button circle @click.stop>
-                  <el-icon>
-                    <MoreFilled />
-                  </el-icon>
-                </el-button>
+                <el-button circle :loading="loadingState.deletingTaskId === row.task.id" @click.stop>
+  <el-icon>
+    <MoreFilled />
+  </el-icon>
+</el-button>
 
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -358,6 +376,7 @@ import { ElMessageBox } from "element-plus";
 const props = defineProps({
   sections: { type: Array, default: () => [] },
   statusOptions: { type: Array, default: () => [] },
+  loadingState: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits([
@@ -528,10 +547,10 @@ function cancelSectionEdit() {
 }
 
 function saveSectionEdit(sectionId) {
-  sectionEditFormRef.value?.validate((valid) => {
+  sectionEditFormRef.value?.validate(async (valid) => {
     if (!valid) return;
 
-    emit("rename-section-requested", sectionId, sectionEditForm.title.trim());
+    await emit("rename-section-requested", sectionId, sectionEditForm.title.trim());
     cancelSectionEdit();
   });
 }
@@ -572,8 +591,8 @@ function closeCreate() {
   createFormRef.value?.clearValidate?.();
 }
 
-function saveCreate() {
-  createFormRef.value?.validate((valid) => {
+async function saveCreate() {
+  createFormRef.value?.validate(async (valid) => {
     if (!valid) return;
 
     const task = {
@@ -584,7 +603,7 @@ function saveCreate() {
       dueDate: addDraft.value.dueDate || null,
     };
 
-    emit("upsert", {
+    await emit("upsert", {
       fromSectionId: activeSectionId.value,
       editingTaskId: null,
       task,
@@ -620,10 +639,10 @@ function cancelAddSection() {
 }
 
 function saveAddSection() {
-  sectionAddFormRef.value?.validate((valid) => {
+  sectionAddFormRef.value?.validate(async (valid) => {
     if (!valid) return;
 
-    emit("add-section-requested", sectionAddForm.title.trim());
+    await emit("add-section-requested", sectionAddForm.title.trim());
     cancelAddSection();
   });
 }
@@ -726,12 +745,12 @@ function cancelEdit() {
 }
 
 function saveEdit(row) {
-  editTaskFormRef.value?.validate((valid) => {
+  editTaskFormRef.value?.validate(async (valid) => {
     syncEditTaskErrors();
 
     if (!valid) return;
 
-    emit("upsert", {
+    await emit("upsert", {
       fromSectionId: row.sectionId,
       editingTaskId: row.task.id,
       task: {
@@ -765,7 +784,7 @@ async function onDelete(sectionId, taskId) {
       }
     );
 
-    emit("delete", { sectionId, taskId });
+    await emit("delete", { sectionId, taskId });
     closeAllMenus();
     cancelEdit();
   } catch {

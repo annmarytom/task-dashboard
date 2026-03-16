@@ -20,23 +20,19 @@
       @submit.prevent="submit"
     >
       <el-form-item label="Task Name" prop="name">
-        <el-input v-model.trim="form.name" placeholder="Enter Your Task" />
+        <el-input v-model.trim="form.name" placeholder="Enter Your Task" :disabled="loading" />
       </el-form-item>
 
-      <el-form-item label="Description">
-        <el-input
-          v-model.trim="form.description"
-          type="textarea"
-          placeholder="Description"
-          :rows="4"
-        />
+    <el-form-item label="Description">
+        <el-input v-model.trim="form.description" type="textarea" placeholder="Description" :rows="4"
+          :disabled="loading" />
       </el-form-item>
 
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="Status">
            <el-select v-model="form.status" placeholder="Select or create section" filterable allow-create
-              default-first-option style="width: 100%;">
+              default-first-option style="width: 100%;" :disabled="loading">
               <el-option
                 v-for="opt in statusOptions"
                 :key="opt"
@@ -49,21 +45,16 @@
 
         <el-col :span="12">
           <el-form-item label="Due Date" prop="dueDate">
-            <el-date-picker
-              v-model="form.dueDate"
-              type="date"
-              placeholder="Pick a date"
-              value-format="YYYY-MM-DD"
-              format="YYYY-MM-DD"
-              style="width: 100%;"
-            />
+           <el-date-picker v-model="form.dueDate" type="date" placeholder="Pick a date" value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD" style="width: 100%;" :disabled="loading" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px;">
-        <el-button @click="cancel">Cancel</el-button>
-        <el-button type="primary" @click="submit">
+        <el-button @click="cancel" :disabled="loading">Cancel</el-button>
+
+        <el-button type="primary" :loading="loading" @click="submit">
           {{ isEdit ? "Save" : "Add" }}
         </el-button>
       </div>
@@ -79,6 +70,7 @@ const props = defineProps({
   statusOptions: { type: Array, default: () => [] },
   defaultStatus: { type: String, default: "" },
   initialTask: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["cancel", "save"]);
