@@ -1,31 +1,31 @@
 <template>
   <div class="page">
     <section
-        class="shell"
-        @click="closeAllMenus"
-        v-loading="loading.bootstrapping"
-        element-loading-text="Loading tasks..."
->
+      class="shell"
+      @click="closeAllMenus"
+      v-loading="loading.bootstrapping"
+      element-loading-text="Loading tasks..."
+    >
       <!-- Header -->
       <header class="topbar">
         <div class="top-bar-left">
           <h1 class="title">Task Management</h1>
-        </div> 
+        </div>
 
-         <!-- Search -->
-      <div class="search-bar" @click.stop>
-        <el-input
-          v-model.trim="searchTerm"
-          placeholder="Search tasks by name, description, status, or due date"
-          clearable
-        >
-          <template #prefix>
-            <el-icon>
-              <Search />
-            </el-icon>
-          </template>
-        </el-input>
-      </div>
+        <!-- Search -->
+        <div class="search-bar" @click.stop>
+          <el-input
+            v-model.trim="searchTerm"
+            placeholder="Search tasks by name, description, status, or due date"
+            clearable
+          >
+            <template #prefix>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+        </div>
 
         <!-- Toggle -->
         <div class="view-toggle" @click.stop>
@@ -41,7 +41,6 @@
             Board View
           </el-button>
 
-
           <el-button
             class="pill"
             :type="viewMode === 'table' ? 'warning' : 'default'"
@@ -53,136 +52,168 @@
             </el-icon>
             Table View
           </el-button>
-
-          
         </div>
       </header>
 
       <el-divider class="divider" />
 
       <!-- BOARD VIEW -->
+      <!-- BOARD VIEW -->
       <div v-if="viewMode === 'board'" class="board-wrap">
-        <div v-if="filteredSections.length" class="board-row">
-          <el-card
-            v-for="sec in filteredSections"
-            :key="sec.id"
-            class="col"
-            shadow="never"
-          >
-            <div class="col-header">
-              <!-- Inline edit title -->
-              <div class="col-title">
-                <template v-if="editingSectionId === sec.id">
-                  <SectionInlineEditor
-  v-model="newSectionTitle"
-  placeholder="Section name"
-  :existing-titles="sections.filter((s) => s.id !== sec.id).map((s) => s.title)"
-  :loading="loading.renamingSectionId === sec.id"
-  @save="onRenameSection(sec.id, $event)"
-  @cancel="cancelSectionEdit"
-/>
-                </template>
+        <template v-if="filteredSections.length">
+          <div class="board-row">
+            <el-card
+              v-for="sec in filteredSections"
+              :key="sec.id"
+              class="col"
+              shadow="never"
+            >
+              <div class="col-header">
+                <div class="col-title">
+                  <template v-if="editingSectionId === sec.id">
+                    <SectionInlineEditor
+                      v-model="newSectionTitle"
+                      placeholder="Section name"
+                      :existing-titles="
+                        sections
+                          .filter((s) => s.id !== sec.id)
+                          .map((s) => s.title)
+                      "
+                      :loading="loading.renamingSectionId === sec.id"
+                      @save="onRenameSection(sec.id, $event)"
+                      @cancel="cancelSectionEdit"
+                    />
+                  </template>
 
-                <template v-else>
-                  <h2>{{ sec.title }}</h2>
-                </template>
+                  <template v-else>
+                    <h2>{{ sec.title }}</h2>
+                  </template>
+                </div>
+
+                <div
+                  class="col-header-actions"
+                  v-if="editingSectionId !== sec.id"
+                >
+                  <el-button
+                    circle
+                    size="small"
+                    class="icon-btn"
+                    title="Edit"
+                    :loading="loading.renamingSectionId === sec.id"
+                    @click.stop="startEditSection(sec.id)"
+                  >
+                    <el-icon>
+                      <Edit />
+                    </el-icon>
+                  </el-button>
+
+                  <el-button
+                    circle
+                    size="small"
+                    class="icon-btn danger"
+                    title="Delete"
+                    :loading="loading.deletingSectionId === sec.id"
+                    @click.stop="requestDeleteSection(sec.id)"
+                  >
+                    <el-icon>
+                      <Delete />
+                    </el-icon>
+                  </el-button>
+                </div>
               </div>
 
-              <!-- icons on the right -->
-              <div
-                class="col-header-actions"
-                v-if="editingSectionId !== sec.id"
-              >
-              <el-button
-  circle
-  size="small"
-  class="icon-btn"
-  title="Edit"
-  :loading="loading.renamingSectionId === sec.id"
-  @click.stop="startEditSection(sec.id)"
->
-                  <el-icon>
-                    <Edit />
-                  </el-icon>
-                </el-button>
+              <TaskList
+                :section-id="sec.id"
+                :section-title="sec.title"
+                :tasks="sec.tasks"
+                :status-options="statusOptions"
+                :default-status="sec.title"
+                :loading-state="loading"
+                @upsert="handleTaskUpsert"
+                @delete="handleTaskDelete"
+                @move="handleTaskMove"
+              />
+            </el-card>
 
+            <!-- Add Section column -->
+            <div class="addCol" @click.stop>
+              <template v-if="addingSection">
+                <SectionInlineEditor
+                  v-model="newSectionTitle"
+                  placeholder="Section name"
+                  :existing-titles="sections.map((s) => s.title)"
+                  :loading="loading.addingSection"
+                  @save="onAddSection"
+                  @cancel="cancelNewSection"
+                />
+              </template>
+
+              <template v-else>
                 <el-button
-  circle
-  size="small"
-  class="icon-btn danger"
-  title="Delete"
-  :loading="loading.deletingSectionId === sec.id"
-  @click.stop="requestDeleteSection(sec.id)"
->
+                  class="add-section-btn"
+                  type="default"
+                  :loading="loading.addingSection"
+                  @click="startAddSection"
+                >
                   <el-icon>
-                    <Delete />
+                    <Plus />
                   </el-icon>
+                  Add Section
                 </el-button>
-              </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="empty-board-layout">
+            <div class="empty-board-top-left" @click.stop>
+              <template v-if="addingSection">
+                <SectionInlineEditor
+                  v-model="newSectionTitle"
+                  placeholder="Section name"
+                  :existing-titles="sections.map((s) => s.title)"
+                  :loading="loading.addingSection"
+                  @save="onAddSection"
+                  @cancel="cancelNewSection"
+                />
+              </template>
+
+              <template v-else>
+                <el-button
+                  class="add-section-btn empty-add-btn"
+                  type="default"
+                  :loading="loading.addingSection"
+                  @click="startAddSection"
+                >
+                  <el-icon>
+                    <Plus />
+                  </el-icon>
+                  Add Section
+                </el-button>
+              </template>
             </div>
 
-            <!-- TaskList  -->
-            <TaskList
-  :section-id="sec.id"
-  :section-title="sec.title"
-  :tasks="sec.tasks"
-  :status-options="statusOptions"
-  :default-status="sec.title"
-  :loading-state="loading"
-  @upsert="handleTaskUpsert"
-  @delete="handleTaskDelete"
-  @move="handleTaskMove"
-/>
-          </el-card>
-
-          <!-- Add Section column -->
-          <div class="addCol" @click.stop>
-            <template v-if="addingSection">
-              <SectionInlineEditor
-  v-model="newSectionTitle"
-  placeholder="Section name"
-  :existing-titles="sections.map((s) => s.title)"
-  :loading="loading.addingSection"
-  @save="onAddSection"
-  @cancel="cancelNewSection"
-/>
-            </template>
-
-            <template v-else>
-              <el-button
-  class="add-section-btn"
-  type="default"
-  :loading="loading.addingSection"
-  @click="startAddSection"
->
-                <el-icon>
-                  <Plus />
-                </el-icon>
-                Add Section
-              </el-button>
-            </template>
+            <div class="empty-board-center">
+              <el-empty description="No tasks found" />
+            </div>
           </div>
-        </div>
-
-        <el-empty
-          v-else
-          description="No tasks match your search"
-        />
+        </template>
       </div>
 
       <!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
         <TaskTable
-  :sections="filteredSections"
-  :status-options="statusOptions"
-  :loading-state="loading"
-  @upsert="handleTaskUpsert"
-  @delete="handleTaskDelete"
-  @move="handleTaskMove"
-  @add-section-requested="onAddSection"
-  @rename-section-requested="onRenameSection"
-  @delete-section-requested="requestDeleteSection"
-/>
+          :sections="filteredSections"
+          :status-options="statusOptions"
+          :loading-state="loading"
+          @upsert="handleTaskUpsert"
+          @delete="handleTaskDelete"
+          @move="handleTaskMove"
+          @add-section-requested="onAddSection"
+          @rename-section-requested="onRenameSection"
+          @delete-section-requested="requestDeleteSection"
+        />
       </div>
     </section>
   </div>
@@ -365,7 +396,12 @@ watch(
 <style scoped>
 .page {
   min-height: 100vh;
-  background: radial-gradient(circle at 20% 10%, #ffd1e6 0%, #f6a8c7 45%, #f3a3c4 100%);
+  background: radial-gradient(
+    circle at 20% 10%,
+    #ffd1e6 0%,
+    #f6a8c7 45%,
+    #f3a3c4 100%
+  );
   padding: 26px;
 }
 
@@ -419,7 +455,7 @@ watch(
   margin: 10px 0 18px;
 }
 
-.board-wrap{
+.board-wrap {
   padding: 6px;
 }
 
@@ -475,5 +511,35 @@ watch(
 
 .table-wrap {
   padding: 6px;
+}
+
+.empty-board-state {
+  flex: 0 0 340px;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-board-layout {
+  position: relative;
+  min-height: 420px;
+}
+
+.empty-board-top-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.empty-board-center {
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-add-btn {
+  width: 220px;
 }
 </style>
