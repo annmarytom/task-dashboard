@@ -202,7 +202,7 @@
             </el-form-item>
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="4" style="padding:20px;">
             <el-form-item label=" ">
               <el-space>
                 <el-button type="primary" :loading="loadingState.creatingTask" @click="saveCreate">Add</el-button>
