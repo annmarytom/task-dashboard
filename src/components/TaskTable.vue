@@ -12,8 +12,13 @@
       @click.stop
       style="margin-bottom: 16px; display: flex; flex-direction: row; gap: 30px;"
     >
-      <el-tabs v-model="activeSectionId" type="card">
-        <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id">
+    <el-tabs
+      v-model="activeSectionId"
+      type="card"
+      class="section-tabs"
+      :class="{'section-tabs--expanded': addingSection || editingSectionId !== null}"
+    >
+        <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id" >
           <template #label>
             <template v-if="editingSectionId !== sec.id">
               <el-space>
@@ -802,3 +807,53 @@ function handleRowCommand(command, row) {
   }
 }
 </script>
+<style lang="css" scoped>
+:deep(.section-tabs) {
+ 
+  --el-tabs-header-height: 52px;
+}
+
+:deep(.section-tabs.section-tabs--expanded) {
+  --el-tabs-header-height: auto;
+}
+
+:deep(.section-tabs .el-tabs__header) {
+  margin-bottom: 0;
+}
+
+:deep(.section-tabs .el-tabs__nav-wrap),
+:deep(.section-tabs .el-tabs__nav-scroll),
+:deep(.section-tabs .el-tabs__nav),
+:deep(.section-tabs .el-tabs__item) {
+  overflow: visible !important;
+}
+
+:deep(.section-tabs .el-tabs__item.is-top) {
+  height: auto !important;
+  min-height: 42px;
+  align-items: flex-start;
+ 
+}
+
+:deep(.inline-section-form .el-form-item) {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  
+}
+
+:deep(.inline-section-form .el-form-item__content) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  
+}
+
+:deep(.inline-section-form .el-form-item__error) {
+  position: static !important;
+  margin-top: 4px;
+  line-height: 1.2;
+  white-space: normal;
+  
+}
+</style>
