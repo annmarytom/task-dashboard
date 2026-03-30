@@ -6,13 +6,13 @@
       v-loading="loading.bootstrapping"
       element-loading-text="Loading tasks..."
     >
-      <!-- Header -->
+       <!-- Header -->
       <header class="topbar">
         <div class="top-bar-left">
           <h1 class="title">Task Management</h1>
         </div>
 
-        <!-- Search -->
+   <!-- Search -->
         <div class="search-bar" @click.stop>
           <el-input
             v-model.trim="searchTerm"
@@ -27,7 +27,7 @@
           </el-input>
         </div>
 
-        <!-- Toggle -->
+      <!-- Toggle -->
         <div class="view-toggle" @click.stop>
           <el-button
             class="pill"
@@ -57,10 +57,9 @@
 
       <el-divider class="divider" />
 
-      <!-- BOARD VIEW -->
-      <!-- BOARD VIEW -->
+  <!-- BOARD VIEW -->
       <div v-if="viewMode === 'board'" class="board-wrap">
-        <template v-if="filteredSections.length">
+        <template v-if="sections.length">
           <div class="board-row">
             <el-card
               v-for="sec in filteredSections"
@@ -135,7 +134,7 @@
               />
             </el-card>
 
-            <!-- Add Section column -->
+          <!-- Add Section column -->
             <div class="addCol" @click.stop>
               <template v-if="addingSection">
                 <SectionInlineEditor
@@ -201,7 +200,7 @@
         </template>
       </div>
 
-      <!-- TABLE VIEW -->
+<!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
         <TaskTable
           :sections="filteredSections"
@@ -309,9 +308,14 @@ async function requestDeleteSection(sectionId) {
   const sec = sections.value.find((s) => s.id === sectionId);
   if (!sec) return;
 
+  const isUnknownSection =
+    (sec.title || "").trim().toLowerCase() === "unknown tasks";
+
   try {
     await ElMessageBox.confirm(
-      `All tasks in this section will be moved to "Unknown Tasks".`,
+      isUnknownSection
+        ? `All tasks inside this section will be permanently deleted.`
+        : `All tasks in this section will be moved to "Unknown Tasks".`,
       `Delete section "${sec.title}"?`,
       {
         confirmButtonText: "Delete",
@@ -339,28 +343,26 @@ const filteredSections = computed(() => {
     return sections.value;
   }
 
-  return sections.value
-    .map((section) => {
-      const filteredTasks = (section.tasks || []).filter((task) => {
-        const haystack = [
-          task.name,
-          task.description,
-          task.status,
-          task.dueDate,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+  return sections.value.map((section) => {
+    const filteredTasks = (section.tasks || []).filter((task) => {
+      const haystack = [
+        task.name,
+        task.description,
+        task.status,
+        task.dueDate,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-        return haystack.includes(q);
-      });
+      return haystack.includes(q);
+    });
 
-      return {
-        ...section,
-        tasks: filteredTasks,
-      };
-    })
-    .filter((section) => section.tasks.length > 0);
+    return {
+      ...section,
+      tasks: filteredTasks,
+    };
+  });
 });
 
 async function handleTaskUpsert(payload) {

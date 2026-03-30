@@ -128,6 +128,13 @@ export const useTaskStore = defineStore("task", {
       return (title || "").trim().toLowerCase();
     },
 
+    isUnknownSectionTitle(title) {
+      return (
+        this.normalizeSectionTitle(title) ===
+        this.normalizeSectionTitle(UNKNOWN_SECTION_TITLE)
+      );
+    },
+
     isDuplicateSectionTitle(title, excludeSectionId = null) {
       const normalized = this.normalizeSectionTitle(title);
 
@@ -166,8 +173,7 @@ export const useTaskStore = defineStore("task", {
       let unknownSection = this.sections.find(
         (section) =>
           section.id !== excludeSectionId &&
-          this.normalizeSectionTitle(section.title) ===
-            this.normalizeSectionTitle(UNKNOWN_SECTION_TITLE)
+          this.isUnknownSectionTitle(section.title)
       );
 
       if (!unknownSection) {
@@ -183,7 +189,7 @@ export const useTaskStore = defineStore("task", {
       return unknownSection;
     },
 
-    // -------------------------
+ // -------------------------
     // Snackbar
     // -------------------------
     showSnack(message, duration = 3000) {
@@ -196,7 +202,7 @@ export const useTaskStore = defineStore("task", {
       this.snack.open = false;
     },
 
-    // -------------------------
+ // -------------------------
     // Section Actions
     // -------------------------
     async addSection(title) {
@@ -271,13 +277,27 @@ export const useTaskStore = defineStore("task", {
         await this.simulateApi();
 
         const deletedTitle = secToDelete.title;
-        const tasksToMove = secToDelete.tasks || [];
+        const tasksToMove = Array.isArray(secToDelete.tasks)
+          ? [...secToDelete.tasks]
+          : [];
+
+        // If deleting Unknown Tasks section, delete it completely like a bin
+        if (this.isUnknownSectionTitle(deletedTitle)) {
+          this.sections = this.sections.filter((s) => s.id !== sectionId);
+          this.saveToLocalStorage();
+          this.showSnack(
+            `Section "${deletedTitle}" and all its tasks were deleted`,
+            3000
+          );
+          return;
+        }
 
         if (tasksToMove.length > 0) {
           const unknownSection = this.getOrCreateUnknownSection(sectionId);
 
           const movedTasks = tasksToMove.map((task) => ({
             ...task,
+            id: task.id || uniqueId("task_"),
             status: unknownSection.title,
           }));
 
