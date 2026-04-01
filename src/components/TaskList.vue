@@ -1,37 +1,41 @@
 <template>
   <div>
     <el-space direction="vertical" fill style="width: 100%">
-      <el-button type="primary" :loading="loadingState.creatingTask" @click="openAdd">
-  + Add Task
-</el-button>
+      <el-button
+        type="primary"
+        :loading="loadingState.creatingTask"
+        @click="openAdd"
+      >
+        + Add Task
+      </el-button>
 
-      <!-- Inline ADD form -->
+  <!-- Inline ADD form -->
       <el-card v-if="addingTask" shadow="never">
         <AddTask
-        :status-options="statusOptions"
-        :default-status="defaultStatus"
-        :initial-task="null"
-        :loading="loadingState.creatingTask"
-        @cancel="closeForms"
-        @save="onSaveTask"
-/>
+          :status-options="statusOptions"
+          :default-status="defaultStatus"
+          :initial-task="null"
+          :loading="loadingState.creatingTask"
+          @cancel="closeForms"
+          @save="onSaveTask"
+        />
       </el-card>
 
       <el-space direction="vertical" fill style="width: 100%">
         <div v-for="t in tasks" :key="t.id">
-          <!-- Inline EDIT form -->
+           <!-- Inline EDIT form -->
           <el-card v-if="editingTaskId === t.id" shadow="never">
             <AddTask
-             :status-options="statusOptions"
-             :default-status="defaultStatus"
-             :initial-task="t"
-             :loading="loadingState.updatingTaskId === t.id"
-             @cancel="closeForms"
-             @save="onSaveTask"
-/>
+              :status-options="statusOptions"
+              :default-status="defaultStatus"
+              :initial-task="t"
+              :loading="loadingState.updatingTaskId === t.id"
+              @cancel="closeForms"
+              @save="onSaveTask"
+            />
           </el-card>
 
-          <!-- Normal card -->
+ <!-- Normal card -->
           <el-card v-else shadow="hover">
             <el-space direction="vertical" fill style="width: 100%">
               <div>
@@ -62,9 +66,13 @@
                 "
               >
                 <el-space>
-                  <el-button circle :loading="loadingState.updatingTaskId === t.id" @click="openEdit(t.id)">
-  <el-icon><Edit /></el-icon>
-</el-button>
+                  <el-button
+                    circle
+                    :loading="loadingState.updatingTaskId === t.id"
+                    @click="openEdit(t.id)"
+                  >
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
 
                   <el-popover
                     placement="bottom-start"
@@ -99,13 +107,13 @@
                 </el-space>
 
                 <el-button
-                   type="danger"
-                   circle
-                   :loading="loadingState.deletingTaskId === t.id"
-                   @click="onDelete(t.id)"
->
-  <el-icon><Delete /></el-icon>
-</el-button>
+                  type="danger"
+                  circle
+                  :loading="loadingState.deletingTaskId === t.id"
+                  @click="onDelete(t.id)"
+                >
+                  <el-icon><Delete /></el-icon>
+                </el-button>
               </div>
             </el-space>
           </el-card>
@@ -152,8 +160,8 @@ function closeForms() {
   editingTaskId.value = null;
 }
 
- async function onSaveTask(task) {
-  emit("upsert", {
+async function onSaveTask(task) {
+  await emit("upsert", {
     fromSectionId: props.sectionId,
     editingTaskId: editingTaskId.value,
     task,
@@ -175,12 +183,12 @@ async function onDelete(taskId) {
         type: "warning",
       }
     );
-
-    emit("delete", { sectionId: props.sectionId, taskId });
-    closeMove();
   } catch {
-    // user cancelled
+    return;
   }
+
+  await emit("delete", { sectionId: props.sectionId, taskId });
+  closeMove();
 }
 
 /** move popup */

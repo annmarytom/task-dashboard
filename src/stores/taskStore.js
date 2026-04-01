@@ -1,19 +1,104 @@
 import { defineStore } from "pinia";
-import { uniqueId } from "lodash";
 
 const UNKNOWN_SECTION_TITLE = "Unknown Tasks";
 const STORAGE_KEY = "task-management-store";
 
+function generateId(prefix = "id") {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
+
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function createSection(title = "Todo", tasks = []) {
+  return {
+    id: generateId("section"),
+    title,
+    tasks,
+  };
+}
+
+function createTask(task = {}, fallbackStatus = "Todo") {
+  return {
+    id: task.id || generateId("task"),
+    name: task.name ?? "",
+    description: task.description ?? "",
+    status: task.status ?? fallbackStatus,
+    dueDate: task.dueDate ?? null,
+  };
+}
+
 function getDefaultState() {
   return {
-    sections: [
-      {
-        id: uniqueId("section_"),
-        title: "Todo",
-        tasks: [],
-      },
-    ],
+    sections: [createSection("Todo", [])],
   };
+}
+
+function normalizeTitle(title) {
+  return (title || "").trim().toLowerCase();
+}
+
+function sanitizeSections(rawSections) {
+  if (!Array.isArray(rawSections) || rawSections.length === 0) {
+    return getDefaultState().sections;
+  }
+
+  const seenSectionIds = new Set();
+  const seenTaskIds = new Set();
+
+  const sanitized = rawSections
+    .filter((section) => section && typeof section === "object")
+    .map((section, sectionIndex) => {
+      let sectionId =
+        section.id && !seenSectionIds.has(section.id)
+          ? section.id
+          : generateId("section");
+
+      if (seenSectionIds.has(sectionId)) {
+        sectionId = generateId("section");
+      }
+      seenSectionIds.add(sectionId);
+
+      const sectionTitle =
+        typeof section.title === "string" && section.title.trim()
+          ? section.title.trim()
+          : `Section ${sectionIndex + 1}`;
+
+      const tasks = Array.isArray(section.tasks)
+        ? section.tasks
+            .filter((task) => task && typeof task === "object")
+            .map((task) => {
+              let taskId =
+                task.id && !seenTaskIds.has(task.id)
+                  ? task.id
+                  : generateId("task");
+
+              if (seenTaskIds.has(taskId)) {
+                taskId = generateId("task");
+              }
+              seenTaskIds.add(taskId);
+
+              return {
+                ...createTask(task, sectionTitle),
+                id: taskId,
+                status: sectionTitle,
+              };
+            })
+        : [];
+
+      return {
+        id: sectionId,
+        title: sectionTitle,
+        tasks,
+      };
+    });
+
+  if (!sanitized.some((section) => normalizeTitle(section.title) === "todo")) {
+    sanitized.unshift(createSection("Todo", []));
+  }
+
+  return sanitized;
 }
 
 function readSectionsFromLocalStorage() {
@@ -25,10 +110,7 @@ function readSectionsFromLocalStorage() {
     }
 
     const parsed = JSON.parse(saved);
-
-    return Array.isArray(parsed.sections) && parsed.sections.length
-      ? parsed.sections
-      : getDefaultState().sections;
+    return sanitizeSections(parsed.sections);
   } catch (error) {
     console.error("Failed to load task store from localStorage:", error);
     return getDefaultState().sections;
@@ -64,7 +146,10 @@ export const useTaskStore = defineStore("task", {
     },
 
     sectionByTitle: (state) => {
-      return (title) => state.sections.find((s) => s.title === title);
+      return (title) =>
+        state.sections.find(
+          (s) => normalizeTitle(s.title) === normalizeTitle(title)
+        );
     },
 
     isSectionRenaming: (state) => {
@@ -94,9 +179,9 @@ export const useTaskStore = defineStore("task", {
       });
     },
 
-    // -------------------------
-    // localStorage helper
-    // -------------------------
+     // -------------------------
+     // localStorage helper
+     // -------------------------
     saveToLocalStorage() {
       try {
         localStorage.setItem(
@@ -116,16 +201,17 @@ export const useTaskStore = defineStore("task", {
       try {
         await this.simulateApi();
         this.sections = readSectionsFromLocalStorage();
+        this.saveToLocalStorage();
       } finally {
         this.loading.bootstrapping = false;
       }
     },
 
-    // -------------------------
+     // -------------------------
     // Duplicate section helpers
     // -------------------------
     normalizeSectionTitle(title) {
-      return (title || "").trim().toLowerCase();
+      return normalizeTitle(title);
     },
 
     isUnknownSectionTitle(title) {
@@ -157,12 +243,7 @@ export const useTaskStore = defineStore("task", {
       );
 
       if (!section) {
-        section = {
-          id: uniqueId("section_"),
-          title: cleanTitle,
-          tasks: [],
-        };
-
+        section = createSection(cleanTitle, []);
         this.sections.push(section);
       }
 
@@ -177,21 +258,13 @@ export const useTaskStore = defineStore("task", {
       );
 
       if (!unknownSection) {
-        unknownSection = {
-          id: uniqueId("section_"),
-          title: UNKNOWN_SECTION_TITLE,
-          tasks: [],
-        };
-
+        unknownSection = createSection(UNKNOWN_SECTION_TITLE, []);
         this.sections.push(unknownSection);
       }
 
       return unknownSection;
     },
 
- // -------------------------
-    // Snackbar
-    // -------------------------
     showSnack(message, duration = 3000) {
       this.snack.open = true;
       this.snack.message = message;
@@ -202,13 +275,12 @@ export const useTaskStore = defineStore("task", {
       this.snack.open = false;
     },
 
- // -------------------------
-    // Section Actions
-    // -------------------------
     async addSection(title) {
       const cleanTitle = (title || "").trim();
 
-      if (!cleanTitle) return;
+      if (!cleanTitle) {
+        throw new Error("Section name is required");
+      }
 
       if (this.isDuplicateSectionTitle(cleanTitle)) {
         throw new Error("Section name already exists");
@@ -219,11 +291,7 @@ export const useTaskStore = defineStore("task", {
       try {
         await this.simulateApi();
 
-        this.sections.push({
-          id: uniqueId("section_"),
-          title: cleanTitle,
-          tasks: [],
-        });
+        this.sections.push(createSection(cleanTitle, []));
 
         this.saveToLocalStorage();
         this.showSnack(`Section "${cleanTitle}" added`);
@@ -235,14 +303,18 @@ export const useTaskStore = defineStore("task", {
     async renameSection(sectionId, title) {
       const cleanTitle = (title || "").trim();
 
-      if (!cleanTitle) return;
+      if (!cleanTitle) {
+        throw new Error("Section name is required");
+      }
 
       if (this.isDuplicateSectionTitle(cleanTitle, sectionId)) {
         throw new Error("Section name already exists");
       }
 
       const section = this.sections.find((s) => s.id === sectionId);
-      if (!section) return;
+      if (!section) {
+        throw new Error("Section not found");
+      }
 
       this.loading.renamingSectionId = sectionId;
 
@@ -269,7 +341,9 @@ export const useTaskStore = defineStore("task", {
 
     async deleteSection(sectionId) {
       const secToDelete = this.sections.find((s) => s.id === sectionId);
-      if (!secToDelete) return;
+      if (!secToDelete) {
+        throw new Error("Section not found");
+      }
 
       this.loading.deletingSectionId = sectionId;
 
@@ -278,10 +352,9 @@ export const useTaskStore = defineStore("task", {
 
         const deletedTitle = secToDelete.title;
         const tasksToMove = Array.isArray(secToDelete.tasks)
-          ? [...secToDelete.tasks]
+          ? secToDelete.tasks.map((task) => ({ ...task }))
           : [];
 
-        // If deleting Unknown Tasks section, delete it completely like a bin
         if (this.isUnknownSectionTitle(deletedTitle)) {
           this.sections = this.sections.filter((s) => s.id !== sectionId);
           this.saveToLocalStorage();
@@ -296,8 +369,7 @@ export const useTaskStore = defineStore("task", {
           const unknownSection = this.getOrCreateUnknownSection(sectionId);
 
           const movedTasks = tasksToMove.map((task) => ({
-            ...task,
-            id: task.id || uniqueId("task_"),
+            ...createTask(task, unknownSection.title),
             status: unknownSection.title,
           }));
 
@@ -326,18 +398,24 @@ export const useTaskStore = defineStore("task", {
     // -------------------------
     async addTask(task) {
       const sec = this.ensureSectionExists(task.status);
-      if (!sec) return;
+      if (!sec) {
+        throw new Error("Target section not found");
+      }
 
       this.loading.creatingTask = true;
 
       try {
         await this.simulateApi();
 
-        sec.tasks.push({
-          ...task,
-          id: uniqueId("task_"),
-          status: sec.title,
-        });
+        sec.tasks.push(
+          createTask(
+            {
+              ...task,
+              status: sec.title,
+            },
+            sec.title
+          )
+        );
 
         this.saveToLocalStorage();
         this.showSnack("Task added", 2500);
@@ -348,10 +426,14 @@ export const useTaskStore = defineStore("task", {
 
     async updateTask({ fromSectionId, editingTaskId, task }) {
       const fromSec = this.sections.find((s) => s.id === fromSectionId);
-      if (!fromSec) return;
+      if (!fromSec) {
+        throw new Error("Source section not found");
+      }
 
       const idx = fromSec.tasks.findIndex((t) => t.id === editingTaskId);
-      if (idx === -1) return;
+      if (idx === -1) {
+        throw new Error("Task not found");
+      }
 
       this.loading.updatingTaskId = editingTaskId;
 
@@ -359,9 +441,11 @@ export const useTaskStore = defineStore("task", {
         await this.simulateApi();
 
         const updated = { ...fromSec.tasks[idx], ...task, id: editingTaskId };
-
         const toSec = this.ensureSectionExists(updated.status);
-        if (!toSec) return;
+
+        if (!toSec) {
+          throw new Error("Target section not found");
+        }
 
         updated.status = toSec.title;
 
@@ -390,10 +474,14 @@ export const useTaskStore = defineStore("task", {
 
     async deleteTask({ sectionId, taskId }) {
       const sec = this.sections.find((s) => s.id === sectionId);
-      if (!sec) return;
+      if (!sec) {
+        throw new Error("Section not found");
+      }
 
       const idx = sec.tasks.findIndex((t) => t.id === taskId);
-      if (idx === -1) return;
+      if (idx === -1) {
+        throw new Error("Task not found");
+      }
 
       this.loading.deletingTaskId = taskId;
 
@@ -416,6 +504,7 @@ export const useTaskStore = defineStore("task", {
       const fromIndex = sec.tasks.findIndex((t) => t.id === taskId);
       if (fromIndex === -1) return;
       if (newIndex === fromIndex) return;
+      if (newIndex < 0 || newIndex >= sec.tasks.length) return;
 
       const [task] = sec.tasks.splice(fromIndex, 1);
       sec.tasks.splice(newIndex, 0, task);

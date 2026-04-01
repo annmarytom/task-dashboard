@@ -1,24 +1,22 @@
 <template>
   <el-card shadow="never" @click="closeAllMenus">
-    <!-- Header -->
     <div style="margin-bottom: 16px">
       <el-button type="primary" @click.stop="openCreateInTab">
         + Create task
       </el-button>
     </div>
 
-    <!-- Tabs -->
     <div
       @click.stop
       style="margin-bottom: 16px; display: flex; flex-direction: row; gap: 30px;"
     >
-    <el-tabs
-      v-model="activeSectionId"
-      type="card"
-      class="section-tabs"
-      :class="{'section-tabs--expanded': addingSection || editingSectionId !== null}"
-    >
-        <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id" >
+      <el-tabs
+        v-model="activeSectionId"
+        type="card"
+        class="section-tabs"
+        :class="{ 'section-tabs--expanded': addingSection || editingSectionId !== null }"
+      >
+        <el-tab-pane v-for="sec in sections" :key="sec.id" :name="sec.id">
           <template #label>
             <template v-if="editingSectionId !== sec.id">
               <el-space>
@@ -30,19 +28,19 @@
                     circle
                     :loading="loadingState.renamingSectionId === sec.id"
                     @click.stop="startEditSection(sec)"
->
+                  >
                     <el-icon>
                       <Edit />
                     </el-icon>
                   </el-button>
 
                   <el-button
-  size="small"
-  type="danger"
-  circle
-  :loading="loadingState.deletingSectionId === sec.id"
-  @click.stop="requestDeleteSection(sec)"
->
+                    size="small"
+                    type="danger"
+                    circle
+                    :loading="loadingState.deletingSectionId === sec.id"
+                    @click.stop="requestDeleteSection(sec)"
+                  >
                     <el-icon>
                       <Delete />
                     </el-icon>
@@ -57,6 +55,7 @@
                   :ref="setSectionEditFormRef"
                   :model="sectionEditForm"
                   :rules="sectionRules"
+                  class="inline-section-form"
                   @submit.prevent
                 >
                   <el-form-item prop="title" style="margin-bottom: 0">
@@ -71,12 +70,12 @@
                 </el-form>
 
                 <el-button
-  size="small"
-  type="success"
-  circle
-  :loading="loadingState.renamingSectionId === sec.id"
-  @click.stop="saveSectionEdit(sec.id)"
->
+                  size="small"
+                  type="success"
+                  circle
+                  :loading="loadingState.renamingSectionId === sec.id"
+                  @click.stop="saveSectionEdit(sec.id)"
+                >
                   <el-icon>
                     <Check />
                   </el-icon>
@@ -96,13 +95,13 @@
       <div>
         <template v-if="!addingSection">
           <el-button
-             plain
-             :loading="loadingState.addingSection"
-             @click="openAddSection"
-             style="width: 200px; height: 38px; border: 2px dashed #cbd5e1; font-weight: 800;"
->
-  + Add Section
-</el-button>
+            plain
+            :loading="loadingState.addingSection"
+            @click="openAddSection"
+            style="width: 200px; height: 38px; border: 2px dashed #cbd5e1; font-weight: 800;"
+          >
+            + Add Section
+          </el-button>
         </template>
 
         <template v-else>
@@ -111,6 +110,7 @@
               ref="sectionAddFormRef"
               :model="sectionAddForm"
               :rules="sectionRules"
+              class="inline-section-form"
               @submit.prevent
             >
               <el-form-item prop="title" style="margin-bottom: 0">
@@ -131,7 +131,7 @@
               circle
               :loading="loadingState.addingSection"
               @click.stop="saveAddSection"
->
+            >
               <el-icon>
                 <Check />
               </el-icon>
@@ -147,13 +147,13 @@
       </div>
     </div>
 
-    <!-- Create row -->
+ <!-- Create row -->
     <el-card
       v-if="addingTask"
       shadow="never"
       style="margin-bottom: 16px"
       v-loading="loadingState.creatingTask"
->
+    >
       <el-form
         ref="createFormRef"
         :model="addDraft"
@@ -184,8 +184,14 @@
 
           <el-col :span="4">
             <el-form-item label="Status">
-              <el-select v-model="addDraft.status" placeholder="Select or create section" filterable allow-create
-                default-first-option style="width: 100%">
+              <el-select
+                v-model="addDraft.status"
+                placeholder="Select or create section"
+                filterable
+                allow-create
+                default-first-option
+                style="width: 100%"
+              >
                 <el-option
                   v-for="opt in statusOptions"
                   :key="opt"
@@ -203,15 +209,28 @@
                 type="date"
                 value-format="YYYY-MM-DD"
                 format="YYYY-MM-DD"
-                placeholder="Due date" style="width: 100%" />
+                placeholder="Due date"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
 
           <el-col :span="4" style="padding:20px;">
             <el-form-item label=" ">
               <el-space>
-                <el-button type="primary" :loading="loadingState.creatingTask" @click="saveCreate">Add</el-button>
-                 <el-button :disabled="loadingState.creatingTask" @click="closeCreate">Cancel</el-button>
+                <el-button
+                  type="primary"
+                  :loading="loadingState.creatingTask"
+                  @click="saveCreate"
+                >
+                  Add
+                </el-button>
+                <el-button
+                  :disabled="loadingState.creatingTask"
+                  @click="closeCreate"
+                >
+                  Cancel
+                </el-button>
               </el-space>
             </el-form-item>
           </el-col>
@@ -230,15 +249,27 @@
       <el-form-item prop="dueDate" />
     </el-form>
 
-    <!-- Table -->
+  <!-- Table -->
     <div @click.stop>
-      <el-table :data="paginatedRows" style="width: 100%" height="520" empty-text="No tasks yet.">
+      <el-table
+        :data="paginatedRows"
+        style="width: 100%"
+        height="520"
+        empty-text="No tasks yet."
+      >
         <el-table-column label="Task name" min-width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-input v-model.trim="editDraft.name" placeholder="Task name" @keydown.enter.prevent="saveEdit(row)"
-              @keydown.esc.prevent="cancelEdit" />
-              <div v-if="editTaskErrors.name" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
+              <el-input
+                v-model.trim="editDraft.name"
+                placeholder="Task name"
+                @keydown.enter.prevent="saveEdit(row)"
+                @keydown.esc.prevent="cancelEdit"
+              />
+              <div
+                v-if="editTaskErrors.name"
+                style="margin-top: 4px; color: #f56c6c; font-size: 12px"
+              >
                 {{ editTaskErrors.name }}
               </div>
             </template>
@@ -262,9 +293,20 @@
         <el-table-column label="Status" width="180">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-             <el-select v-model="editDraft.status" placeholder="Select or create section" filterable allow-create
-                default-first-option style="width: 100%">
-                <el-option v-for="opt in statusOptions" :key="opt" :label="opt" :value="opt" />
+              <el-select
+                v-model="editDraft.status"
+                placeholder="Select or create section"
+                filterable
+                allow-create
+                default-first-option
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="opt in statusOptions"
+                  :key="opt"
+                  :label="opt"
+                  :value="opt"
+                />
               </el-select>
             </template>
             <template v-else>
@@ -276,9 +318,18 @@
         <el-table-column label="Due date" width="160">
           <template #default="{ row }">
             <template v-if="isEditing(row)">
-              <el-date-picker v-model="editDraft.dueDate" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD" 
-              placeholder="Due date" style="width: 100%" />
-              <div v-if="editTaskErrors.dueDate" style="margin-top: 4px; color: #f56c6c; font-size: 12px">
+              <el-date-picker
+                v-model="editDraft.dueDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                placeholder="Due date"
+                style="width: 100%"
+              />
+              <div
+                v-if="editTaskErrors.dueDate"
+                style="margin-top: 4px; color: #f56c6c; font-size: 12px"
+              >
                 {{ editTaskErrors.dueDate }}
               </div>
             </template>
@@ -292,28 +343,39 @@
           <template #default="{ row }">
             <template v-if="isEditing(row)">
               <el-space>
-                <el-button type="primary" :loading="loadingState.updatingTaskId === row.task.id" @click="saveEdit(row)">
-                Save
+                <el-button
+                  type="primary"
+                  :loading="loadingState.updatingTaskId === row.task.id"
+                  @click="saveEdit(row)"
+                >
+                  Save
                 </el-button>
-                <el-button :disabled="loadingState.updatingTaskId === row.task.id" @click="cancelEdit">
-                 Cancel
+                <el-button
+                  :disabled="loadingState.updatingTaskId === row.task.id"
+                  @click="cancelEdit"
+                >
+                  Cancel
                 </el-button>
               </el-space>
             </template>
 
             <template v-else>
               <el-dropdown trigger="click" @command="(cmd) => handleRowCommand(cmd, row)">
-                <el-button circle :loading="loadingState.deletingTaskId === row.task.id" @click.stop>
-  <el-icon>
-    <MoreFilled />
-  </el-icon>
-</el-button>
+                <el-button
+                  circle
+                  :loading="loadingState.deletingTaskId === row.task.id"
+                  @click.stop
+                >
+                  <el-icon>
+                    <MoreFilled />
+                  </el-icon>
+                </el-button>
 
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">Edit</el-dropdown-item>
                     <el-dropdown-item command="interchange">
-                      Interchange 
+                      Interchange
                     </el-dropdown-item>
                     <el-dropdown-item command="delete" divided>
                       Delete
@@ -322,13 +384,22 @@
                 </template>
               </el-dropdown>
 
-              <el-card v-if="moveOpenFor === row.task.id" shadow="never" style="margin-top: 8px" @click.stop>
+              <el-card
+                v-if="moveOpenFor === row.task.id"
+                shadow="never"
+                style="margin-top: 8px"
+                @click.stop
+              >
                 <el-space direction="vertical" fill>
                   <div><strong>Move position to:</strong></div>
 
                   <el-space>
-                    <el-input-number v-model="moveTo" :min="1" :max="activeRows.length"
-                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)" />
+                    <el-input-number
+                      v-model="moveTo"
+                      :min="1"
+                      :max="activeRows.length"
+                      @keydown.enter.prevent="applyMove(row.sectionId, row.task.id)"
+                    />
                     <el-button @click="applyMove(row.sectionId, row.task.id)">
                       Move
                     </el-button>
@@ -345,14 +416,10 @@
       </el-table>
     </div>
 
-    <!-- Pagination -->
+  <!-- Pagination -->
     <div
       v-if="activeRows.length > 0"
-      style="
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 16px;
-      "
+      style="display: flex; justify-content: flex-end; margin-top: 16px;"
       @click.stop
     >
       <el-pagination
@@ -398,7 +465,9 @@ const activeSectionId = ref(null);
 watch(
   () => props.sections,
   (secs) => {
-    if (!activeSectionId.value && secs?.length) { activeSectionId.value = secs[0].id; }
+    if (!activeSectionId.value && secs?.length) {
+      activeSectionId.value = secs[0].id;
+    }
 
     if (
       activeSectionId.value &&
@@ -462,16 +531,17 @@ watch(
 const createFormRef = ref(null);
 const editTaskFormRef = ref(null);
 const sectionEditFormRef = ref(null);
+const sectionAddFormRef = ref(null);
 
 function setSectionEditFormRef(el) {
   if (el) {
     sectionEditFormRef.value = el;
   }
 }
+
 function normalizeTitle(title) {
   return (title || "").trim().toLowerCase();
 }
-const sectionAddFormRef = ref(null);
 
 const taskRules = {
   name: [
@@ -551,11 +621,15 @@ function cancelSectionEdit() {
   sectionEditFormRef.value?.clearValidate?.();
 }
 
-function saveSectionEdit(sectionId) {
+async function saveSectionEdit(sectionId) {
   sectionEditFormRef.value?.validate(async (valid) => {
     if (!valid) return;
 
-    await emit("rename-section-requested", sectionId, sectionEditForm.title.trim());
+    await emit(
+      "rename-section-requested",
+      sectionId,
+      sectionEditForm.title.trim()
+    );
     cancelSectionEdit();
   });
 }
@@ -601,7 +675,6 @@ async function saveCreate() {
     if (!valid) return;
 
     const task = {
-      id: Date.now(),
       name: (addDraft.value.name || "").trim(),
       description: (addDraft.value.description || "").trim(),
       status: addDraft.value.status || activeSectionTitle.value,
@@ -643,7 +716,7 @@ function cancelAddSection() {
   sectionAddFormRef.value?.clearValidate?.();
 }
 
-function saveAddSection() {
+async function saveAddSection() {
   sectionAddFormRef.value?.validate(async (valid) => {
     if (!valid) return;
 
@@ -749,7 +822,7 @@ function cancelEdit() {
   editTaskFormRef.value?.clearValidate?.();
 }
 
-function saveEdit(row) {
+async function saveEdit(row) {
   editTaskFormRef.value?.validate(async (valid) => {
     syncEditTaskErrors();
 
@@ -788,13 +861,13 @@ async function onDelete(sectionId, taskId) {
         type: "warning",
       }
     );
-
-    await emit("delete", { sectionId, taskId });
-    closeAllMenus();
-    cancelEdit();
   } catch {
-    // user cancelled
+    return;
   }
+
+  await emit("delete", { sectionId, taskId });
+  closeAllMenus();
+  cancelEdit();
 }
 
 function handleRowCommand(command, row) {
@@ -809,7 +882,7 @@ function handleRowCommand(command, row) {
 </script>
 <style lang="css" scoped>
 :deep(.section-tabs) {
- 
+
   --el-tabs-header-height: 52px;
 }
 
@@ -832,21 +905,21 @@ function handleRowCommand(command, row) {
   height: auto !important;
   min-height: 42px;
   align-items: flex-start;
- 
+
 }
 
 :deep(.inline-section-form .el-form-item) {
   display: flex;
   flex-direction: column;
   margin-bottom: 0;
-  
+
 }
 
 :deep(.inline-section-form .el-form-item__content) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  
+
 }
 
 :deep(.inline-section-form .el-form-item__error) {

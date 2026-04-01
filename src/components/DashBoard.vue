@@ -12,7 +12,7 @@
           <h1 class="title">Task Management</h1>
         </div>
 
-   <!-- Search -->
+       <!-- Search -->
         <div class="search-bar" @click.stop>
           <el-input
             v-model.trim="searchTerm"
@@ -27,7 +27,7 @@
           </el-input>
         </div>
 
-      <!-- Toggle -->
+        <!-- Toggle -->
         <div class="view-toggle" @click.stop>
           <el-button
             class="pill"
@@ -57,7 +57,7 @@
 
       <el-divider class="divider" />
 
-  <!-- BOARD VIEW -->
+       <!-- BOARD VIEW -->
       <div v-if="viewMode === 'board'" class="board-wrap">
         <template v-if="sections.length">
           <div class="board-row">
@@ -134,7 +134,7 @@
               />
             </el-card>
 
-          <!-- Add Section column -->
+             <!-- Add Section column -->
             <div class="addCol" @click.stop>
               <template v-if="addingSection">
                 <SectionInlineEditor
@@ -200,7 +200,7 @@
         </template>
       </div>
 
-<!-- TABLE VIEW -->
+      <!-- TABLE VIEW -->
       <div v-else class="table-wrap" @click.stop>
         <TaskTable
           :sections="filteredSections"
@@ -275,7 +275,8 @@ async function onAddSection(title) {
     addingSection.value = false;
     newSectionTitle.value = "";
   } catch (error) {
-    ElMessage.error(error.message || "Unable to add section");
+    ElMessage.error(error?.message || "Unable to add section");
+    throw error;
   }
 }
 
@@ -300,7 +301,8 @@ async function onRenameSection(sectionId, title) {
     editingSectionId.value = null;
     newSectionTitle.value = "";
   } catch (error) {
-    ElMessage.error(error.message || "Unable to rename section");
+    ElMessage.error(error?.message || "Unable to rename section");
+    throw error;
   }
 }
 
@@ -323,7 +325,11 @@ async function requestDeleteSection(sectionId) {
         type: "warning",
       }
     );
+  } catch {
+    return;
+  }
 
+  try {
     await taskStore.deleteSection(sectionId);
 
     if (editingSectionId.value === sectionId) {
@@ -331,8 +337,9 @@ async function requestDeleteSection(sectionId) {
     }
 
     closeAllMenus();
-  } catch {
-    // user cancelled
+  } catch (error) {
+    ElMessage.error(error?.message || "Unable to delete section");
+    throw error;
   }
 }
 
@@ -366,12 +373,22 @@ const filteredSections = computed(() => {
 });
 
 async function handleTaskUpsert(payload) {
-  await taskStore.upsertTask(payload);
+  try {
+    await taskStore.upsertTask(payload);
+  } catch (error) {
+    ElMessage.error(error?.message || "Unable to save task");
+    throw error;
+  }
 }
 
 async function handleTaskDelete(payload) {
-  await taskStore.deleteTask(payload);
-  closeAllMenus();
+  try {
+    await taskStore.deleteTask(payload);
+    closeAllMenus();
+  } catch (error) {
+    ElMessage.error(error?.message || "Unable to delete task");
+    throw error;
+  }
 }
 
 function handleTaskMove(payload) {
