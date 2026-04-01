@@ -8,6 +8,16 @@ This changelog records the progress of the Task Dashboard project from initial s
 
 ## [Unreleased]
 
+
+## [2026-04-1]
+
+### fixed 
+ - Fixed the issue - After reload ,makes one delete remove multiple sections.
+
+---
+
+## [2026-03-31]
+
 ### Added
 - Added changelog file.
 
